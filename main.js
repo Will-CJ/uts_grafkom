@@ -69,7 +69,7 @@ function main() {
     /*========================= MATRICES ========================= */
     var PROJMATRIX = LIBS.get_projection(40, CANVAS.width / CANVAS.height, 1, 100);
     var VIEWMATRIX = LIBS.get_I4();
-    LIBS.translateZ(VIEWMATRIX, -3);
+    LIBS.translateZ(VIEWMATRIX, -2);
 
     /*========================= MOUSE DRAG ========================= */
     var drag = false;

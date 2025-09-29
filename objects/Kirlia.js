@@ -1,5 +1,5 @@
 // Kirlia.js
-import { Ellipsoid, Cylinder, Cone, Trapezoid, SurfaceOfRevolution, ExtrudedShape, ModifiedEllipsoid } from "./KirliaObject.js";
+import { Ellipsoid, Cylinder, Cone, Trapezoid, ExtrudedShape, ModifiedEllipsoid } from "./KirliaObject.js";
 
 // Buat kelas untuk Pokémon Kirlia
 export class Kirlia {
@@ -8,6 +8,7 @@ export class Kirlia {
         const WHITE = [1.0, 1.0, 1.0];
         const LIGHT_PASTEL_GREEN = [0.733, 0.984, 0.741];
         const LIGHT_PINK = [1.0, 0.667, 0.686];
+        const BLACK = [0.0, 0.0, 0.0];
         
         // Membuat semua bagian tubuh Kirlia dan mengaturnya sebagai child dari objek utama
         // Badan utama (sebagai root dari hierarki)
@@ -142,6 +143,39 @@ export class Kirlia {
         LIBS.translateY(headGreen.POSITION_MATRIX, headGreenPositionY);
         LIBS.translateZ(headGreen.POSITION_MATRIX, -0.0001);
         this.body.childs.push(headGreen);
+
+        // Mata
+        const eyeRadiusWhite = 0.05;
+        const leftEye = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, eyeRadiusWhite+0.02, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, LIGHT_PINK);
+        LIBS.translateY(leftEye.POSITION_MATRIX, -0.035);
+        LIBS.translateX(leftEye.POSITION_MATRIX, -0.065);
+        LIBS.translateZ(leftEye.POSITION_MATRIX, 0.14);
+        LIBS.rotateX(leftEye.POSITION_MATRIX, Math.PI / 15);
+        LIBS.rotateY(leftEye.POSITION_MATRIX, -Math.PI / 7);
+        this.head.childs.push(leftEye);
+
+        const RightEye = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, eyeRadiusWhite+0.02, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, LIGHT_PINK);
+        LIBS.translateY(RightEye.POSITION_MATRIX, -0.035);
+        LIBS.translateX(RightEye.POSITION_MATRIX, 0.065);
+        LIBS.translateZ(RightEye.POSITION_MATRIX, 0.14);
+        LIBS.rotateX(RightEye.POSITION_MATRIX, Math.PI / 15);
+        LIBS.rotateY(RightEye.POSITION_MATRIX, Math.PI / 7);
+        this.head.childs.push(RightEye);
+
+
+        //Pupil
+        const pupilRadius = 0.01;
+        const leftPupil = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, BLACK);
+        LIBS.translateY(leftPupil.POSITION_MATRIX, -0.02);
+        LIBS.translateZ(leftPupil.POSITION_MATRIX, 0.04);
+        LIBS.rotateX(leftPupil.POSITION_MATRIX, Math.PI / 15);
+        leftEye.childs.push(leftPupil);
+
+        const rightPupil = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, BLACK);
+        LIBS.translateY(rightPupil.POSITION_MATRIX, -0.02);
+        LIBS.translateZ(rightPupil.POSITION_MATRIX, 0.04);
+        LIBS.rotateX(rightPupil.POSITION_MATRIX, Math.PI / 15);
+        RightEye.childs.push(rightPupil);
         
         // Rambut kanan
         const hairBaseA = 0.15;
