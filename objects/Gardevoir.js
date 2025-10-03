@@ -1,5 +1,5 @@
 // Gardevoir.js
-import { BezierSOR, Ellipsoid, ConeSurface, Cylinder, LoftedCrescent, PROFILES } from "./GardevoirObject.js";
+import { BezierSOR, Ellipsoid, ConeSurface, Cylinder, PROFILES } from "./GardevoirObject.js";
 
 // Definisikan class utama Gardevoir
 export class Gardevoir {
