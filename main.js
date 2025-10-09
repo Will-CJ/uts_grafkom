@@ -1,6 +1,7 @@
 // main.js
 // Mengimpor kelas Kirlia dari file Kirlia.js
 import { Kirlia } from "./objects/Kirlia.js";
+import { Gardevoir } from "./objects/Gardevoir.js"; // <-- Import Gardevoir
 
 function main() {
     /** @type {HTMLCanvasElement} */
@@ -15,6 +16,9 @@ function main() {
     }
 
     /*========================= SHADERS ========================= */
+    // NOTE: Shader Anda tidak menggunakan 'normal', jadi GardevoirObject akan menggunakan
+    // vertex position saja. Untuk shading yang benar, Anda perlu menambahkan 'normal'
+    // attribute dan uniform pencahayaan (lighting) ke shader ini.
     var shader_vertex_source = `
         attribute vec3 position;
         uniform mat4 Pmatrix, Vmatrix, Mmatrix;
@@ -55,21 +59,32 @@ function main() {
     var _Pmatrix = GL.getUniformLocation(SHADER_PROGRAM, "Pmatrix");
     var _Vmatrix = GL.getUniformLocation(SHADER_PROGRAM, "Vmatrix");
     var _Mmatrix = GL.getUniformLocation(SHADER_PROGRAM, "Mmatrix");
+    var _uColor = GL.getUniformLocation(SHADER_PROGRAM, "uColor"); // <-- Ambil lokasi uniform warna
     
     /*========================= OBJEK ========================= */
-    // Buat instance dari kelas Kirlia
+    
+    // --- Kirlia Setup ---
     const kirlia = new Kirlia(GL, SHADER_PROGRAM, _position, _Mmatrix);
-    
-    // Atur posisi global untuk Kirlia (jika perlu)
     const kirliaModelMatrix = LIBS.get_I4();
-    
-    // Setup objek Kirlia
+    LIBS.translateX(kirliaModelMatrix, -1.0); // Geser Kirlia ke kiri
     kirlia.setup();
+    
+    // --- Gardevoir Setup ---
+    // Instansiasi Gardevoir dengan GL context dan lokasi Uniform/Attribute
+    // Catatan: Karena shader tidak memiliki 'normal', kita lewati null.
+    const gardevoir = new Gardevoir(GL, SHADER_PROGRAM, _position, _Mmatrix, _uColor); 
+    
+    // Atur posisi global untuk Gardevoir (geser ke kanan)
+    const gardevoirModelMatrix = LIBS.get_I4();
+    LIBS.translateX(gardevoirModelMatrix, 1.0); // Geser Gardevoir ke kanan
+    
+    // Setup objek Gardevoir (membuat mesh dan buffer)
+    gardevoir.setup();
 
     /*========================= MATRICES ========================= */
     var PROJMATRIX = LIBS.get_projection(40, CANVAS.width / CANVAS.height, 1, 100);
     var VIEWMATRIX = LIBS.get_I4();
-    LIBS.translateZ(VIEWMATRIX, -3);
+    LIBS.translateZ(VIEWMATRIX, -7); // Tarik kamera lebih jauh agar kedua objek muat
 
     /*========================= MOUSE DRAG ========================= */
     var drag = false;
@@ -120,8 +135,14 @@ function main() {
         GL.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
         GL.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
 
-        // Render objek Kirlia dengan matriks rotasi
-        kirlia.render(rotation);
+        // 1. Kirlia (Matriks Render = Rotasi Mouse * Posisi Kirlia)
+        var kirliaRenderMatrix = LIBS.multiply(rotation, kirliaModelMatrix);
+        kirlia.render(kirliaRenderMatrix);
+
+        // 2. Gardevoir (Matriks Render = Rotasi Mouse * Posisi Gardevoir)
+        var gardevoirRenderMatrix = LIBS.multiply(rotation, gardevoirModelMatrix);
+        // Meneruskan matriks ini sebagai 'rootMatrix' ke Gardevoir.draw
+        gardevoir.render(gardevoirRenderMatrix); 
 
         GL.flush();
         window.requestAnimationFrame(animate);
