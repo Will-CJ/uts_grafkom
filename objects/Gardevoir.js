@@ -1,5 +1,5 @@
 // Gardevoir.js
-import { BezierSOR, Ellipsoid, ConeSurface, Cylinder, PROFILES } from "./GardevoirObject.js";
+import { BezierSOR, Ellipsoid, ConeSurface, Cylinder, Crescent, PROFILES } from "./GardevoirObject.js";
 
 // Definisikan class utama Gardevoir
 export class Gardevoir {
@@ -102,6 +102,27 @@ export class Gardevoir {
         this.body.childs.push(headGreen);
 
         //Rambut
+        // --- Objek Merah (Torus Parsial) ---
+        const charm_radius = 0.35;
+        const charm_thickness = 0.15;
+        const charm_start = 90;
+        const charm_end = 270; // Dari samping kiri ke samping kanan (busur 180 derajat)
+
+        const red_charm = new Crescent(
+            ...GL_PARAMS,
+            charm_radius,   // majorRadius (7)
+            charm_thickness,// minorRadius (8)
+            charm_start,    // startAngDeg (9)
+            charm_end,      // endAngDeg (10)
+            32,             // majorSegments (11)
+            32,             // minorSegments (12)
+            RED             // color (13)
+        );
+
+        // Atur posisi agar melingkari pinggang/leher
+        LIBS.translateY(red_charm.POSITION_MATRIX, 1); 
+        LIBS.scale(red_charm.POSITION_MATRIX, 0.5, 0.5, 0.5); // Skala keseluruhan
+        this.body.childs.push(red_charm);
 
         //Gaun
         const skirt1 = new ConeSurface(
