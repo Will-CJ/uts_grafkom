@@ -65,7 +65,7 @@ export class Gallade {
             0.0, 1.0  // Titik akhir
         ];
         
-        const GLOBAL_SCALE_FACTOR = 0.75; 
+        const GLOBAL_SCALE_FACTOR = 0.9; 
 
         // =============================================================
         //              A. PINGGANG (ROOT)
@@ -74,6 +74,7 @@ export class Gallade {
         // Pinggang/Pelvis (Ellipsoid putih) sebagai root
         this.pinggang = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, 0.3, 0.2, 0.2, 30, 30, this.COLOR_PUTIH);
         this.rootObject = this.pinggang;
+        LIBS.translateY(this.pinggang.POSITION_MATRIX, 0.6)
         LIBS.scale(this.pinggang.POSITION_MATRIX, GLOBAL_SCALE_FACTOR, GLOBAL_SCALE_FACTOR, GLOBAL_SCALE_FACTOR);
         
         // =============================================================
@@ -81,7 +82,7 @@ export class Gallade {
         // =============================================================
 
         // 1. Badan Utama (Cylinder putih)
-        this.badanBiru = new Cylinder(GL, SHADER_PROGRAM, _position, _MMatrix, 0.1, 0.75, 30, this.COLOR_PUTIH);
+        this.badanBiru = new Cylinder(GL, SHADER_PROGRAM, _position, _MMatrix, 0.15, 0.75, 30, this.COLOR_PUTIH);
         LIBS.translateY(this.badanBiru.POSITION_MATRIX, 0.3); // Posisikan di atas pinggang
 
         // 2. Armor Merah (ExtrudedShape) - Diletakkan di depan badan silinder
@@ -305,13 +306,13 @@ export class Gallade {
         // Kaki Kiri (Cone - Celana)
         this.kakiKiri = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, 0.2, 0.4, 0.4, 30, this.COLOR_PUTIH);
         LIBS.translateY(this.kakiKiri.POSITION_MATRIX, -0.4);
-        LIBS.translateX(this.kakiKiri.POSITION_MATRIX, 0.1);
+        LIBS.translateX(this.kakiKiri.POSITION_MATRIX, 0.12);
         LIBS.scale(this.kakiKiri.POSITION_MATRIX, 0.5, 3, 0.5); 
         
         // Kaki Kanan (Cone - Celana)
         this.kakiKanan = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, 0.2, 0.4, 0.4, 30, this.COLOR_PUTIH);
         LIBS.translateY(this.kakiKanan.POSITION_MATRIX, -0.4);
-        LIBS.translateX(this.kakiKanan.POSITION_MATRIX, -0.1);
+        LIBS.translateX(this.kakiKanan.POSITION_MATRIX, -0.12);
         LIBS.scale(this.kakiKanan.POSITION_MATRIX, 0.5, 3, 0.5); 
 
         this.pinggang.childs.push(this.kakiKiri, this.kakiKanan);
