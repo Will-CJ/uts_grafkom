@@ -2,6 +2,7 @@
 // Mengimpor kelas Kirlia dari file Kirlia.js
 import { Kirlia } from "./objects/Kirlia.js";
 import { Gardevoir } from "./objects/Gardevoir.js"; // <-- Import Gardevoir
+import { Gallade } from "./objects/Gallade.js"; // <-- Import Gardevoir
 
 function main() {
     /** @type {HTMLCanvasElement} */
@@ -66,7 +67,7 @@ function main() {
     // --- Kirlia Setup ---
     const kirlia = new Kirlia(GL, SHADER_PROGRAM, _position, _Mmatrix);
     const kirliaModelMatrix = LIBS.get_I4();
-    LIBS.translateX(kirliaModelMatrix, -1.0); // Geser Kirlia ke kiri
+    LIBS.translateX(kirliaModelMatrix, -1.5); // Geser Kirlia ke kiri
     kirlia.setup();
     
     // --- Gardevoir Setup ---
@@ -76,10 +77,15 @@ function main() {
     
     // Atur posisi global untuk Gardevoir (geser ke kanan)
     const gardevoirModelMatrix = LIBS.get_I4();
-    LIBS.translateX(gardevoirModelMatrix, 1.0); // Geser Gardevoir ke kanan
+    // LIBS.translateX(gardevoirModelMatrix, 1.0); // Geser Gardevoir ke kanan
     
     // Setup objek Gardevoir (membuat mesh dan buffer)
     gardevoir.setup();
+
+    const gallade = new Gallade(GL, SHADER_PROGRAM, _position, _Mmatrix);
+    const galladeModelMatrix = LIBS.get_I4();
+    LIBS.translateX(galladeModelMatrix, 1.5); // Geser Kirlia ke kiri
+    gallade.setup();
 
     /*========================= MATRICES ========================= */
     var PROJMATRIX = LIBS.get_projection(40, CANVAS.width / CANVAS.height, 1, 100);
@@ -143,6 +149,9 @@ function main() {
         var gardevoirRenderMatrix = LIBS.multiply(rotation, gardevoirModelMatrix);
         // Meneruskan matriks ini sebagai 'rootMatrix' ke Gardevoir.draw
         gardevoir.render(gardevoirRenderMatrix); 
+
+        var galladeRenderMatrix = LIBS.multiply(rotation, galladeModelMatrix);
+        gallade.render(galladeRenderMatrix);
 
         GL.flush();
         window.requestAnimationFrame(animate);
