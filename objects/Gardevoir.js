@@ -1,5 +1,5 @@
 // Gardevoir.js
-import { BezierSOR, Ellipsoid, ConeSurface, Cylinder, Crescent, PROFILES } from "./GardevoirObject.js";
+import { BezierSOR, Ellipsoid, ConeSurface, Cylinder, Crescent, BsplineExtrudedObject, PROFILES } from "./GardevoirObject.js";
 
 // Definisikan class utama Gardevoir
 export class Gardevoir {
@@ -7,11 +7,10 @@ export class Gardevoir {
      * @param {WebGLRenderingContext} GL - Konteks WebGL.
      * @param {number} SHADER_PROGRAM - Program shader WebGL.
      * @param {number} _position - Lokasi attribute 'position'.
-     * @param {number} _uColor - Lokasi uniform 'uColor' (vec3).
      * @param {number} _Mmatrix - Lokasi uniform 'MMatrix'.
      * @param {number} _normal - Lokasi attribute 'normal' (diteruskan sebagai null karena shader sederhana).
      */
-    constructor(GL, SHADER_PROGRAM, _position, _Mmatrix, _uColor, _normal = null) {
+    constructor(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal = null) {
         // --- Mendefinisikan Warna Khas Gardevoir (RGB) ---
         const WHITE = [1.0, 1.0, 1.0];             // Putih (Gaun Atas, Kepala, Lengan)
         const GREEN = [0.4, 0.8, 0.6];             // Hijau Mint/Muda (Gaun Bawah)
@@ -22,11 +21,10 @@ export class Gardevoir {
         this.SHADER_PROGRAM = SHADER_PROGRAM;
         this._position = _position;
         this._Mmatrix = _Mmatrix;
-        this._uColor = _uColor;
         this._normal = _normal; 
         
         // --- Store common parameters in an array for cleaner calls ---
-        // GL_PARAMS: [GL, SHADER_PROGRAM, _position, _normal, _Mmatrix, _uColor]
+        // GL_PARAMS: [GL, SHADER_PROGRAM, _position, _normal, _Mmatrix]
         const GL_PARAMS = [this.GL, this.SHADER_PROGRAM, this._position, this._Mmatrix];
 
         //Badan
@@ -35,6 +33,24 @@ export class Gardevoir {
             PROFILES.BODY, GREEN
         );
         LIBS.translateY(this.body.POSITION_MATRIX, 0.7);
+
+        //Pink
+        const bladeControlPoints = [
+            [ -0.2, 1.0 ],  // Top peak
+            [ 0.9, 1.1 ],  // Top curve assist
+            [ 1.0, 0.1 ],  // Shoulder
+            [ 0.7, -1.0 ]
+
+        ];
+
+        // Buat objek 3D dengan kedalaman 0.2
+        const pinkBlade = new BsplineExtrudedObject(GL, SHADER_PROGRAM, _position, _Mmatrix, bladeControlPoints, 0.05, 30);
+        LIBS.scale(pinkBlade.POSITION_MATRIX, 0.3, 0.3, 0.35)
+        LIBS.rotateY(pinkBlade.MOVE_MATRIX, LIBS.degToRad(-90))
+        LIBS.rotateX(pinkBlade.MOVE_MATRIX, LIBS.degToRad(-90))
+        LIBS.translateY(pinkBlade.POSITION_MATRIX, 0.15)
+        LIBS.translateZ(pinkBlade.POSITION_MATRIX, 0.16)
+        this.body.childs.push(pinkBlade);
 
         //Leher
         const neck = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, 0.035, 0.2, 30, WHITE);
@@ -117,7 +133,6 @@ export class Gardevoir {
             [0.3, 0.8, 0.6]             // color (13)
         );
 
-        // Atur posisi agar melingkari pinggang/leher
         LIBS.translateY(braid1.POSITION_MATRIX, -0.04); 
         LIBS.translateZ(braid1.POSITION_MATRIX, 0.08); 
         LIBS.translateX(braid1.POSITION_MATRIX, 0.13); 
@@ -137,7 +152,6 @@ export class Gardevoir {
             [0.3, 0.8, 0.6]             // color (13)
         );
 
-        // Atur posisi agar melingkari pinggang/leher
         LIBS.translateY(braid2.POSITION_MATRIX, -0.04); 
         LIBS.translateZ(braid2.POSITION_MATRIX, 0.08); 
         LIBS.translateX(braid2.POSITION_MATRIX, -0.13); 

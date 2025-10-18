@@ -73,7 +73,7 @@ function main() {
     // --- Gardevoir Setup ---
     // Instansiasi Gardevoir dengan GL context dan lokasi Uniform/Attribute
     // Catatan: Karena shader tidak memiliki 'normal', kita lewati null.
-    const gardevoir = new Gardevoir(GL, SHADER_PROGRAM, _position, _Mmatrix, _uColor); 
+    const gardevoir = new Gardevoir(GL, SHADER_PROGRAM, _position, _Mmatrix); 
     
     // Atur posisi global untuk Gardevoir (geser ke kanan)
     const gardevoirModelMatrix = LIBS.get_I4();
