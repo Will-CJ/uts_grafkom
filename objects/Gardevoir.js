@@ -37,7 +37,7 @@ export class Gardevoir {
         LIBS.translateY(this.body.POSITION_MATRIX, 0.7);
 
         //Leher
-        const neck = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, 0.055, 0.1, 30, WHITE);
+        const neck = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, 0.035, 0.2, 30, WHITE);
         LIBS.translateY(neck.POSITION_MATRIX, 0.5);
         this.body.childs.push(neck);
 
@@ -45,7 +45,7 @@ export class Gardevoir {
         // Kepala Putih
         const headRadiusWhite = 0.18;
         const head = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusWhite+0.01, headRadiusWhite, headRadiusWhite+0.03, 30, 30, 360, WHITE);
-        LIBS.translateY(head.POSITION_MATRIX, 0.7);
+        LIBS.translateY(head.POSITION_MATRIX, 0.73);
         this.body.childs.push(head);
 
         // Kepala Hijau
@@ -97,32 +97,54 @@ export class Gardevoir {
         
         const headRadiusGreen = 0.18;
         const headGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusGreen+0.01, headRadiusGreen, headRadiusGreen+0.03, 30, 30, 360, GREEN);
-        LIBS.translateY(headGreen.POSITION_MATRIX, 0.7);
-        LIBS.translateZ(headGreen.POSITION_MATRIX, -0.001);
-        this.body.childs.push(headGreen);
+        LIBS.translateZ(headGreen.POSITION_MATRIX, -0.005);
+        head.childs.push(headGreen);
 
-        //Rambut
-        // --- Objek Merah (Torus Parsial) ---
-        const charm_radius = 0.35;
-        const charm_thickness = 0.15;
-        const charm_start = 90;
-        const charm_end = 270; // Dari samping kiri ke samping kanan (busur 180 derajat)
+        //Kepang
+        const braid_radius = 0.35;
+        const braid_thickness = 0.15;
+        const braid_start = 90;
+        const braid_end = 270; // Dari samping kiri ke samping kanan (busur 180 derajat)
 
-        const red_charm = new Crescent(
+        const braid1 = new Crescent(
             ...GL_PARAMS,
-            charm_radius,   // majorRadius (7)
-            charm_thickness,// minorRadius (8)
-            charm_start,    // startAngDeg (9)
-            charm_end,      // endAngDeg (10)
+            braid_radius,   // majorRadius (7)
+            braid_thickness,// minorRadius (8)
+            braid_start,    // startAngDeg (9)
+            braid_end,      // endAngDeg (10)
             32,             // majorSegments (11)
             32,             // minorSegments (12)
-            RED             // color (13)
+            [0.3, 0.8, 0.6]             // color (13)
         );
 
         // Atur posisi agar melingkari pinggang/leher
-        LIBS.translateY(red_charm.POSITION_MATRIX, 1); 
-        LIBS.scale(red_charm.POSITION_MATRIX, 0.5, 0.5, 0.5); // Skala keseluruhan
-        this.body.childs.push(red_charm);
+        LIBS.translateY(braid1.POSITION_MATRIX, -0.04); 
+        LIBS.translateZ(braid1.POSITION_MATRIX, 0.08); 
+        LIBS.translateX(braid1.POSITION_MATRIX, 0.13); 
+        LIBS.rotateZ(braid1.MOVE_MATRIX, LIBS.degToRad(90))
+        LIBS.rotateX(braid1.MOVE_MATRIX, LIBS.degToRad(90))
+        LIBS.scale(braid1.POSITION_MATRIX, 0.5, 0.5, 0.5); // Skala keseluruhan
+        head.childs.push(braid1);
+
+        const braid2 = new Crescent(
+            ...GL_PARAMS,
+            braid_radius,   // majorRadius (7)
+            braid_thickness,// minorRadius (8)
+            braid_start,    // startAngDeg (9)
+            braid_end,      // endAngDeg (10)
+            32,             // majorSegments (11)
+            32,             // minorSegments (12)
+            [0.3, 0.8, 0.6]             // color (13)
+        );
+
+        // Atur posisi agar melingkari pinggang/leher
+        LIBS.translateY(braid2.POSITION_MATRIX, -0.04); 
+        LIBS.translateZ(braid2.POSITION_MATRIX, 0.08); 
+        LIBS.translateX(braid2.POSITION_MATRIX, -0.13); 
+        LIBS.rotateZ(braid2.MOVE_MATRIX, LIBS.degToRad(90))
+        LIBS.rotateX(braid2.MOVE_MATRIX, LIBS.degToRad(90))
+        LIBS.scale(braid2.POSITION_MATRIX, 0.5, 0.5, 0.5); // Skala keseluruhan
+        head.childs.push(braid2);
 
         //Gaun
         const skirt1 = new ConeSurface(
