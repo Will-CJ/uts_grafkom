@@ -118,7 +118,7 @@ function main() {
     const kirlia = new Kirlia(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
     const kirliaModelMatrix = LIBS.get_I4();
     LIBS.translateX(kirliaModelMatrix, -1.0); 
-    LIBS.translateY(kirliaModelMatrix, -0.7); 
+    LIBS.translateY(kirliaModelMatrix, -0.5); 
     LIBS.scale(kirliaModelMatrix, 1.2, 1.2, 1.2);
     kirlia.setup();
     

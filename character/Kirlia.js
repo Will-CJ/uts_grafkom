@@ -20,6 +20,11 @@ export class Kirlia {
         this.bowDuration = 2000; // 2 seconds in milliseconds
         this.maxBowAngle = 90 * Math.PI / 180; // 90 degrees in radians
         this.currentBowAngle = 0;
+
+        // Tambahkan variabel floating state di constructor
+        this.isFloating = true;
+        this.floatAmplitude = 0.07; // Jarak naik-turun (misalnya 5cm)
+        this.floatSpeed = 0.002;
         
         // Membuat semua bagian tubuh Kirlia dan mengaturnya sebagai child dari objek utama
         // Badan bawah (hijau)
@@ -378,7 +383,18 @@ export class Kirlia {
             LIBS.translateY(this.bodyGreen.POSITION_MATRIX, this.bodyGreenInitialY); 
         }
 
+        // --- Floating Logic ---
+        let floatOffsetMatrix = LIBS.get_I4();
+        if (this.isFloating) {
+            // Gunakan waktu (time) untuk osilasi halus naik dan turun
+            const floatY = Math.sin(time * this.floatSpeed) * this.floatAmplitude;
+            LIBS.translateY(floatOffsetMatrix, floatY);
+        }
+
+        // Gabungkan matriks floating ke parentMatrix sebelum merender
+        const combinedMatrix = LIBS.multiply(parentMatrix, floatOffsetMatrix);
+
         // Render DUA root
-        this.allObjects.forEach(obj => obj.render(parentMatrix));
+        this.allObjects.forEach(obj => obj.render(combinedMatrix)); // <-- Gunakan combinedMatrix
     }
 }
