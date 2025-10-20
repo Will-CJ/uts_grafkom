@@ -283,6 +283,23 @@ function main() {
         kirlia.runAnimation();
     }, 15000);
 
+    // Global state
+    let globalTime = 0.0;
+    let isWalking = false; 
+    let lastTime = 0;
+
+    // Tangani input untuk mengubah state
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'w' || event.key === 'W') {
+            isWalking = true;
+        }
+    });
+    document.addEventListener('keyup', (event) => {
+        if (event.key === 'w' || event.key === 'W') {
+            isWalking = false;
+        }
+    });
+
     /*========================= DRAWING ========================= */
     GL.enable(GL.DEPTH_TEST);
     GL.depthFunc(GL.LEQUAL);
@@ -290,6 +307,12 @@ function main() {
     GL.clearDepth(1.0);
 
     function animate(time) {
+        const elapsed = (time - lastTime) / 1000; // Waktu dalam detik
+        lastTime = time;
+        
+        // Perbarui waktu untuk animasi
+        globalTime += elapsed; 
+
         GL.viewport(0, 0, CANVAS.width, CANVAS.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
@@ -357,7 +380,7 @@ function main() {
 
         // Gardevoir 
         var gardevoirRenderMatrix = LIBS.multiply(rotation, gardevoirModelMatrix);
-        gardevoir.render(gardevoirRenderMatrix); 
+        gardevoir.render(gardevoirRenderMatrix, time, isWalking); 
 
         // Gallade
         var galladeRenderMatrix = LIBS.multiply(rotation, galladeModelMatrix);
