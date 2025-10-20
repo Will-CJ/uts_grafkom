@@ -279,11 +279,9 @@ function main() {
     });
 
     // --- Keyboard listener to trigger the bowing animation ---
-    window.addEventListener("keydown", function(e) {
-        if (e.key === 'b' || e.key === 'B') {
-            kirlia.bowing();
-        }
-    });
+    setInterval(() => {
+        kirlia.runAnimation();
+    }, 15000);
 
     /*========================= DRAWING ========================= */
     GL.enable(GL.DEPTH_TEST);
