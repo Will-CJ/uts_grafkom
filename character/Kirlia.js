@@ -1,5 +1,9 @@
 // Kirlia.js
-import { Ellipsoid, Cylinder, Cone, Trapezoid, ExtrudedShape, ModifiedEllipsoid } from "./KirliaObject.js";
+import { Cylinder } from "../object/Cylinder.js";
+import { Ellipsoid } from "../object/Ellipsoid.js";
+import { Trapezoid } from "../object/Trapezoid.js";
+import { BSplineExtruded } from "../object/BSplineExtruded.js";
+import { Cone } from "../object/Cone.js";
 
 // Buat kelas untuk Pokémon Kirlia
 export class Kirlia {
@@ -19,13 +23,28 @@ export class Kirlia {
         // Badan tengah (kerucut)
         const middleBodyRadius = 0.1;
         const middleBodyHeight = 0.28;
-        const middleBody = new Cone(GL, SHADER_PROGRAM, _position, _Mmatrix, middleBodyRadius-0.01, middleBodyRadius-0.01, middleBodyHeight-0.01, 30, WHITE);
+        const radius = middleBodyRadius - 0.01;
+        const height = middleBodyHeight - 0.01;
+        const middleBody = new Cone(
+            GL, 
+            SHADER_PROGRAM, 
+            _position, 
+            _Mmatrix, 
+            radius,       // radius (Radius Alas)
+            0,            // startAngDeg (0 derajat)
+            360,          // endAngDeg (360 derajat untuk kerucut penuh)
+            0,            // tipX (Puncak pada X=0)
+            0,            // tipZ (Puncak pada Z=0)
+            height,       // height (Tinggi)
+            30,           // uSegments (Segmen)
+            WHITE         // color
+        );
         LIBS.translateY(middleBody.POSITION_MATRIX, 0.035);
         this.body.childs.push(middleBody);
         
         // Badan bawah (hijau)
         const bodyGreenRadius = 0.1;
-        const bodyGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, bodyGreenRadius-0.01, bodyGreenRadius-0.03, bodyGreenRadius-0.01, 30, 30, LIGHT_PASTEL_GREEN);
+        const bodyGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, bodyGreenRadius-0.01, bodyGreenRadius-0.03, bodyGreenRadius-0.01, 30, 30, 360, LIGHT_PASTEL_GREEN);
         LIBS.translateY(bodyGreen.POSITION_MATRIX, -0.14);
         this.body.childs.push(bodyGreen);
         
@@ -38,7 +57,7 @@ export class Kirlia {
         bodyGreen.childs.push(legLeftTop);
         
         const legLeftBottomRadius = 0.1;
-        const legLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legLeftBottomRadius-0.075, legLeftBottomRadius+0.01, legLeftBottomRadius-0.075, 30, 30, LIGHT_PASTEL_GREEN);
+        const legLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legLeftBottomRadius-0.075, legLeftBottomRadius+0.01, legLeftBottomRadius-0.075, 30, 30, 360, LIGHT_PASTEL_GREEN);
         LIBS.translateY(legLeftBottom.POSITION_MATRIX, -0.18);
         legLeftTop.childs.push(legLeftBottom);
         
@@ -51,7 +70,7 @@ export class Kirlia {
         bodyGreen.childs.push(legRightTop);
         
         const legRightBottomRadius = 0.1;
-        const legRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legRightBottomRadius-0.075, legRightBottomRadius+0.01, legRightBottomRadius-0.075, 30, 30, LIGHT_PASTEL_GREEN);
+        const legRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legRightBottomRadius-0.075, legRightBottomRadius+0.01, legRightBottomRadius-0.075, 30, 30, 360, LIGHT_PASTEL_GREEN);
         LIBS.translateY(legRightBottom.POSITION_MATRIX, -0.18);
         legRightTop.childs.push(legRightBottom);
         
@@ -65,7 +84,7 @@ export class Kirlia {
         this.body.childs.push(ArmLeftTop);
         
         const ArmLeftBottomRadius = 0.1;
-        const ArmLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftBottomRadius-0.075, ArmLeftBottomRadius+0.01, ArmLeftBottomRadius-0.075, 30, 30, WHITE);
+        const ArmLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftBottomRadius-0.075, ArmLeftBottomRadius+0.01, ArmLeftBottomRadius-0.075, 30, 30, 360, WHITE);
         LIBS.translateY(ArmLeftBottom.POSITION_MATRIX, -0.2);
         ArmLeftTop.childs.push(ArmLeftBottom);
         
@@ -79,20 +98,20 @@ export class Kirlia {
         this.body.childs.push(ArmRightTop);
         
         const ArmRightBottomRadius = 0.1;
-        const ArmRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightBottomRadius-0.075, ArmRightBottomRadius+0.01, ArmRightBottomRadius-0.075, 30, 30, WHITE);
+        const ArmRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightBottomRadius-0.075, ArmRightBottomRadius+0.01, ArmRightBottomRadius-0.075, 30, 30, 360, WHITE);
         LIBS.translateY(ArmRightBottom.POSITION_MATRIX, -0.2);
         ArmRightTop.childs.push(ArmRightBottom);
         
         // Kepala Putih
         const headRadiusWhite = 0.18;
-        this.head = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusWhite+0.01, headRadiusWhite, headRadiusWhite+0.03, 30, 30, WHITE);
+        this.head = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusWhite+0.01, headRadiusWhite, headRadiusWhite+0.03, 30, 30, 360, WHITE);
         const headPositionY = (bodyHeight / 2) + headRadiusWhite-0.05;
         LIBS.translateY(this.head.POSITION_MATRIX, headPositionY);
         this.body.childs.push(this.head);
         
         // Kepala Hijau
         const headGreen1Radius = 0.198;
-        const headGreen1 = new ModifiedEllipsoid(
+        const headGreen1 = new Ellipsoid(
             GL, SHADER_PROGRAM, _position, _Mmatrix,
             headGreen1Radius, headGreen1Radius, headGreen1Radius,
             30, 30, 150, LIGHT_PASTEL_GREEN
@@ -102,7 +121,7 @@ export class Kirlia {
         this.head.childs.push(headGreen1);
         
         const headGreen2Radius = 0.2;
-        const headGreen2 = new ModifiedEllipsoid(
+        const headGreen2 = new Ellipsoid(
             GL, SHADER_PROGRAM, _position, _Mmatrix,
             headGreen2Radius, headGreen2Radius, headGreen2Radius,
             30, 30, 90, LIGHT_PASTEL_GREEN
@@ -114,7 +133,7 @@ export class Kirlia {
         this.head.childs.push(headGreen2);
         
         const headGreen3Radius = 0.2;
-        const headGreen3 = new ModifiedEllipsoid(
+        const headGreen3 = new Ellipsoid(
             GL, SHADER_PROGRAM, _position, _Mmatrix,
             headGreen3Radius, headGreen3Radius, headGreen3Radius,
             30, 30, 90, LIGHT_PASTEL_GREEN
@@ -126,7 +145,7 @@ export class Kirlia {
         this.head.childs.push(headGreen3);
         
         const headGreen4Radius = 0.2;
-        const headGreen4 = new ModifiedEllipsoid(
+        const headGreen4 = new Ellipsoid(
             GL, SHADER_PROGRAM, _position, _Mmatrix,
             headGreen4Radius, headGreen4Radius, headGreen4Radius,
             30, 30, 90, LIGHT_PASTEL_GREEN
@@ -138,7 +157,7 @@ export class Kirlia {
         this.head.childs.push(headGreen4);
         
         const headRadiusGreen = 0.18;
-        const headGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusGreen+0.01, headRadiusGreen, headRadiusGreen+0.03, 30, 30, LIGHT_PASTEL_GREEN);
+        const headGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusGreen+0.01, headRadiusGreen, headRadiusGreen+0.03, 30, 30, 360, LIGHT_PASTEL_GREEN);
         const headGreenPositionY = (bodyHeight / 2) + headRadiusGreen-0.05;
         LIBS.translateY(headGreen.POSITION_MATRIX, headGreenPositionY);
         LIBS.translateZ(headGreen.POSITION_MATRIX, -0.0001);
@@ -146,7 +165,7 @@ export class Kirlia {
 
         // Mata
         const eyeRadiusWhite = 0.05;
-        const leftEye = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, eyeRadiusWhite+0.02, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, LIGHT_PINK);
+        const leftEye = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, eyeRadiusWhite+0.02, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
         LIBS.translateY(leftEye.POSITION_MATRIX, -0.035);
         LIBS.translateX(leftEye.POSITION_MATRIX, -0.065);
         LIBS.translateZ(leftEye.POSITION_MATRIX, 0.14);
@@ -154,7 +173,7 @@ export class Kirlia {
         LIBS.rotateY(leftEye.POSITION_MATRIX, -Math.PI / 7);
         this.head.childs.push(leftEye);
 
-        const RightEye = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, eyeRadiusWhite+0.02, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, LIGHT_PINK);
+        const RightEye = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, eyeRadiusWhite+0.02, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
         LIBS.translateY(RightEye.POSITION_MATRIX, -0.035);
         LIBS.translateX(RightEye.POSITION_MATRIX, 0.065);
         LIBS.translateZ(RightEye.POSITION_MATRIX, 0.14);
@@ -165,13 +184,13 @@ export class Kirlia {
 
         //Pupil
         const pupilRadius = 0.01;
-        const leftPupil = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, BLACK);
+        const leftPupil = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
         LIBS.translateY(leftPupil.POSITION_MATRIX, -0.02);
         LIBS.translateZ(leftPupil.POSITION_MATRIX, 0.04);
         LIBS.rotateX(leftPupil.POSITION_MATRIX, Math.PI / 15);
         leftEye.childs.push(leftPupil);
 
-        const rightPupil = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, BLACK);
+        const rightPupil = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
         LIBS.translateY(rightPupil.POSITION_MATRIX, -0.02);
         LIBS.translateZ(rightPupil.POSITION_MATRIX, 0.04);
         LIBS.rotateX(rightPupil.POSITION_MATRIX, Math.PI / 15);
@@ -258,10 +277,15 @@ export class Kirlia {
         this.body.childs.push(skirtLeftLeft);
         
         // Tanduk kepala (kiri)
-        const custom_controlPoints = [ -0.1, 0.0, -0.05, 0.3, 0.2, 0.1, 0.0, -0.2 ];
-        const headHornLeft = new ExtrudedShape(
+        const custom_controlPoints = [ 
+            [-0.1, 0.0],
+            [-0.05, 0.3],
+            [0.2, 0.1],
+            [0.0, -0.2]
+        ];
+        const headHornLeft = new BSplineExtruded(
             GL, SHADER_PROGRAM, _position, _Mmatrix,
-            custom_controlPoints, 30, 2, 0.01, LIGHT_PINK
+            custom_controlPoints, 0.01, 30,  LIGHT_PINK
         );
         LIBS.translateY(headHornLeft.POSITION_MATRIX, 0.4);
         LIBS.translateX(headHornLeft.POSITION_MATRIX, -0.15);
@@ -271,9 +295,9 @@ export class Kirlia {
         this.body.childs.push(headHornLeft);
         
         // Tanduk kepala (kanan)
-        const headHornRight = new ExtrudedShape(
+        const headHornRight = new BSplineExtruded(
             GL, SHADER_PROGRAM, _position, _Mmatrix,
-            custom_controlPoints, 30, 2, 0.01, LIGHT_PINK
+            custom_controlPoints, 0.01, 30, LIGHT_PINK
         );
         LIBS.translateY(headHornRight.POSITION_MATRIX, 0.4);
         LIBS.translateX(headHornRight.POSITION_MATRIX, 0.15);

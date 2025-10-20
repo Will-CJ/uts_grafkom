@@ -1,5 +1,11 @@
 // Gardevoir.js
-import { BezierSOR, Ellipsoid, ConeSurface, Cylinder, Crescent, BsplineExtrudedObject, PROFILES } from "./GardevoirObject.js";
+import { PROFILES } from "./GardevoirProfile.js";
+import { BezierSOR } from "../object/BezierSOR.js"
+import { Ellipsoid } from "../object/Ellipsoid.js"
+import { Cone } from "../object/Cone.js"
+import { Cylinder } from "../object/Cylinder.js"
+import { Crescent } from "../object/Crescent.js"
+import { BSplineExtruded } from "../object/BSplineExtruded.js"
 
 // Definisikan class utama Gardevoir
 export class Gardevoir {
@@ -44,7 +50,7 @@ export class Gardevoir {
         ];
 
         // Buat objek 3D dengan kedalaman 0.2
-        const pinkBlade = new BsplineExtrudedObject(GL, SHADER_PROGRAM, _position, _Mmatrix, bladeControlPoints, 0.05, 30);
+        const pinkBlade = new BSplineExtruded(GL, SHADER_PROGRAM, _position, _Mmatrix, bladeControlPoints, 0.05, 30);
         LIBS.scale(pinkBlade.POSITION_MATRIX, 0.3, 0.3, 0.35)
         LIBS.rotateY(pinkBlade.MOVE_MATRIX, LIBS.degToRad(-90))
         LIBS.rotateX(pinkBlade.MOVE_MATRIX, LIBS.degToRad(-90))
@@ -161,7 +167,7 @@ export class Gardevoir {
         head.childs.push(braid2);
 
         //Gaun
-        const skirt1 = new ConeSurface(
+        const skirt1 = new Cone(
             ...GL_PARAMS,
             0.7, 0, 90, -0.1, -0.1, 1.5, 30, WHITE 
         );
@@ -170,7 +176,7 @@ export class Gardevoir {
         LIBS.translateZ(skirt1.POSITION_MATRIX, 0.05);
         this.body.childs.push(skirt1);
 
-        const skirt2 = new ConeSurface(
+        const skirt2 = new Cone(
             ...GL_PARAMS,
             0.7, 90, 180, 0.1, -0.1, 1.5, 30, WHITE 
         );
@@ -179,7 +185,7 @@ export class Gardevoir {
         LIBS.translateZ(skirt2.POSITION_MATRIX, 0.05);
         this.body.childs.push(skirt2);
 
-        const skirt3 = new ConeSurface(
+        const skirt3 = new Cone(
             ...GL_PARAMS,
             0.7, 180, 270, 0.1, 0.1, 1.5, 30, WHITE 
         );
@@ -188,7 +194,7 @@ export class Gardevoir {
         LIBS.translateZ(skirt3.POSITION_MATRIX, -0.05);
         this.body.childs.push(skirt3);
 
-        const skirt4 = new ConeSurface(
+        const skirt4 = new Cone(
             ...GL_PARAMS,
             0.7, 270, 360, -0.1, 0.1, 1.5, 30, WHITE 
         );

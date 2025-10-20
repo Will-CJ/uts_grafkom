@@ -1,8 +1,8 @@
 // main.js
 // Mengimpor kelas Kirlia dari file Kirlia.js
-import { Kirlia } from "./objects/Kirlia.js";
-import { Gardevoir } from "./objects/Gardevoir.js"; // <-- Import Gardevoir
-import { Gallade } from "./objects/Gallade.js"; // <-- Import Gardevoir
+import { Kirlia } from "./character/Kirlia.js";
+import { Gardevoir } from "./character/Gardevoir.js"; // <-- Import Gardevoir
+import { Gallade } from "./character/Gallade.js"; // <-- Import Gardevoir
 
 function main() {
     /** @type {HTMLCanvasElement} */
