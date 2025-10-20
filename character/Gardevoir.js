@@ -19,8 +19,8 @@ export class Gardevoir {
     constructor(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal = null) {
         // --- Mendefinisikan Warna Khas Gardevoir (RGB) ---
         const WHITE = [1.0, 1.0, 1.0];             // Putih (Gaun Atas, Kepala, Lengan)
-        const GREEN = [0.4, 0.8, 0.6];             // Hijau Mint/Muda (Gaun Bawah)
-        const RED = [0.9, 0.1, 0.1];               // Merah Cerah (Tanduk, Pinggang)
+        const GREEN = [0.7, 0.94, 0.7];             // Hijau Mint/Muda (Gaun Bawah)
+        const RED = [1.0, 0.667, 0.686];               // Merah Cerah (Tanduk, Pinggang)
         
         // --- Store parameters as instance properties without redeclaring ---
         this.GL = GL;
@@ -50,7 +50,7 @@ export class Gardevoir {
         ];
 
         // Buat objek 3D dengan kedalaman 0.2
-        const pinkBlade = new BSplineExtruded(GL, SHADER_PROGRAM, _position, _Mmatrix, bladeControlPoints, 0.05, 30);
+        const pinkBlade = new BSplineExtruded(GL, SHADER_PROGRAM, _position, _Mmatrix, bladeControlPoints, 0.05, 30, RED);
         LIBS.scale(pinkBlade.POSITION_MATRIX, 0.3, 0.3, 0.35)
         LIBS.rotateY(pinkBlade.MOVE_MATRIX, LIBS.degToRad(-90))
         LIBS.rotateX(pinkBlade.MOVE_MATRIX, LIBS.degToRad(-90))
@@ -136,7 +136,7 @@ export class Gardevoir {
             braid_end,      // endAngDeg (10)
             32,             // majorSegments (11)
             32,             // minorSegments (12)
-            [0.3, 0.8, 0.6]             // color (13)
+            [0.7, 0.94, 0.8]             // color (13)
         );
 
         LIBS.translateY(braid1.POSITION_MATRIX, -0.04); 
@@ -155,7 +155,7 @@ export class Gardevoir {
             braid_end,      // endAngDeg (10)
             32,             // majorSegments (11)
             32,             // minorSegments (12)
-            [0.3, 0.8, 0.6]             // color (13)
+            [0.7, 0.94, 0.8]             // color (13)
         );
 
         LIBS.translateY(braid2.POSITION_MATRIX, -0.04); 

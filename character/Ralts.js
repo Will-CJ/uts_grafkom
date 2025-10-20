@@ -47,7 +47,7 @@ export class Ralts {
         ];
         const headHornFront = new BSplineExtruded(
             GL, SHADER_PROGRAM, _position, _Mmatrix,
-            redHornControlPoints, 0.01, 30, RED
+            redHornControlPoints, 0.01, 30, LIGHT_PINK
         );
         LIBS.translateY(headHornFront.POSITION_MATRIX, 0.2);
         LIBS.translateZ(headHornFront.POSITION_MATRIX, 0.15);
@@ -57,7 +57,7 @@ export class Ralts {
         
         const redHornBack = new BSplineExtruded(
             GL, SHADER_PROGRAM, _position, _Mmatrix,
-            redHornControlPoints, 0.01, 30, RED
+            redHornControlPoints, 0.01, 30, LIGHT_PINK
         );
         LIBS.translateY(redHornBack.POSITION_MATRIX, 0.23);
         LIBS.translateZ(redHornBack.POSITION_MATRIX, -0.13);
