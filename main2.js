@@ -3,6 +3,7 @@
 import { Kirlia } from "./character/Kirlia.js";
 import { Gardevoir } from "./character/Gardevoir.js";
 import { Gallade } from "./character/Gallade.js";
+import { Ralts } from "./character/Ralts.js"; 
 
 function main() {
     /** @type {HTMLCanvasElement} */
@@ -84,7 +85,6 @@ function main() {
     // Set up default program and get locations
     GL.useProgram(COLOR_SHADER_PROGRAM); 
     
-    // --- Color Shader Locations (Used by characters & floor) ---
     var _position = GL.getAttribLocation(COLOR_SHADER_PROGRAM, "position");
     GL.enableVertexAttribArray(_position);
     var _Pmatrix = GL.getUniformLocation(COLOR_SHADER_PROGRAM, "Pmatrix");
@@ -92,7 +92,6 @@ function main() {
     var _Mmatrix = GL.getUniformLocation(COLOR_SHADER_PROGRAM, "Mmatrix");
     var _uColor = GL.getUniformLocation(COLOR_SHADER_PROGRAM, "uColor"); 
     
-    // --- Skybox Shader Locations (Used by skybox) ---
     var _sky_position = GL.getAttribLocation(SKYBOX_SHADER_PROGRAM, "position");
     var _sky_Pmatrix = GL.getUniformLocation(SKYBOX_SHADER_PROGRAM, "Pmatrix");
     var _sky_Vmatrix = GL.getUniformLocation(SKYBOX_SHADER_PROGRAM, "Vmatrix");
@@ -100,45 +99,45 @@ function main() {
     var _sky_uv = GL.getAttribLocation(SKYBOX_SHADER_PROGRAM, "uv");
     var _sky_sampler = GL.getUniformLocation(SKYBOX_SHADER_PROGRAM, "sampler");
     
-    // Enable attributes for the Skybox program as well
     GL.useProgram(SKYBOX_SHADER_PROGRAM);
     GL.uniform1i(_sky_sampler, 0); 
     GL.enableVertexAttribArray(_sky_position);
     GL.enableVertexAttribArray(_sky_uv);
     
-    GL.useProgram(COLOR_SHADER_PROGRAM); // Switch back to color for object setup
+    GL.useProgram(COLOR_SHADER_PROGRAM); 
 
     /*========================= OBJEK SETUP - CHARACTERS ========================= */
     
-    // Note: We pass the COLOR_SHADER_PROGRAM to the character constructors
+    const ralts = new Ralts(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
+    const raltsModelMatrix = LIBS.get_I4();
+    LIBS.translateX(raltsModelMatrix, -3.0); 
+    LIBS.translateY(raltsModelMatrix, -0.9); 
+    LIBS.scale(raltsModelMatrix, 1.5, 1.5, 1.5);
+    ralts.setup();
     
-    // --- Kirlia Setup ---
     const kirlia = new Kirlia(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
     const kirliaModelMatrix = LIBS.get_I4();
-    LIBS.translateX(kirliaModelMatrix, -1.5); 
+    LIBS.translateX(kirliaModelMatrix, -1.0); 
     LIBS.translateY(kirliaModelMatrix, -0.7); 
     LIBS.scale(kirliaModelMatrix, 1.2, 1.2, 1.2);
     kirlia.setup();
     
-    // --- Gardevoir Setup ---
     const gardevoir = new Gardevoir(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix); 
     const gardevoirModelMatrix = LIBS.get_I4();
-    LIBS.translateY(gardevoirModelMatrix, -1); 
+    LIBS.translateX(gardevoirModelMatrix, 1.0); 
+    LIBS.translateY(gardevoirModelMatrix, -1.0); 
     gardevoir.setup();
 
-    // --- Gallade Setup ---
     const gallade = new Gallade(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
     const galladeModelMatrix = LIBS.get_I4();
-    LIBS.translateX(galladeModelMatrix, 1.5); 
+    LIBS.translateX(galladeModelMatrix, 3.0); 
     LIBS.translateY(galladeModelMatrix, -1.1); 
     gallade.setup();
 
 // ----------------------------------------------------------------------
 
     /*========================= ENVIRONMENT SETUP - FLOOR ========================= */
-    
     const floorVertices = [
-        // x, y, z
         -100.0, 0.0, -100.0, 
          100.0, 0.0, -100.0, 
          100.0, 0.0,  100.0, 
@@ -167,43 +166,38 @@ function main() {
     var cube_vertex = [
         // Format: x,y,z, u,v (5 components per vertex)
         // belakang
-        -1,-1,-1,    1,1/3,
-        1,-1,-1,    3/4,1/3,
-        1, 1,-1,    3/4,2/3,
-        -1, 1,-1,    1,2/3,
-
+        -1,-1,-1,    1,1/3,
+        1,-1,-1,    3/4,1/3,
+        1, 1,-1,    3/4,2/3,
+        -1, 1,-1,    1,2/3,
         // depan
-        -1,-1, 1,    1/4,1/3,
-        1,-1, 1,    2/4,1/3,
-        1, 1, 1,    2/4,2/3,
-        -1, 1, 1,    1/4,2/3,
-
+        -1,-1, 1,    1/4,1/3,
+        1,-1, 1,    2/4,1/3,
+        1, 1, 1,    2/4,2/3,
+        -1, 1, 1,    1/4,2/3,
         // kiri
-        -1,-1,-1,    0,1/3,
-        -1, 1,-1,    0,2/3,
-        -1, 1, 1,    1/4,2/3,
-        -1,-1, 1,    1/4,1/3,
-
+        -1,-1,-1,    0,1/3,
+        -1, 1,-1,    0,2/3,
+        -1, 1, 1,    1/4,2/3,
+        -1,-1, 1,    1/4,1/3,
         // kanan
-        1,-1,-1,    3/4,1/3,
-        1, 1,-1,    3/4,2/3,
-        1, 1, 1,    2/4,2/3,
-        1,-1, 1,    2/4,1/3,
-
+        1,-1,-1,    3/4,1/3,
+        1, 1,-1,    3/4,2/3,
+        1, 1, 1,    2/4,2/3,
+        1,-1, 1,    2/4,1/3,
         // bawah
-        -1,-1,-1,    1/4,0,
-        -1,-1, 1,    1/4,1/3,
-        1,-1, 1,    2/4,1/3,
-        1,-1,-1,    2/4,0,
-
+        -1,-1,-1,    1/4,0,
+        -1,-1, 1,    1/4,1/3,
+        1,-1, 1,    2/4,1/3,
+        1,-1,-1,    2/4,0,
         // atas
-        -1, 1,-1,    1/4,1,
-        -1, 1, 1,    1/4,2/3,
-        1, 1, 1,    2/4,2/3,
-        1, 1,-1,    2/4,1
+        -1, 1,-1,    1/4,1,
+        -1, 1, 1,    1/4,2/3,
+        1, 1, 1,    2/4,2/3,
+        1, 1,-1,    2/4,1
     ];
 
-    let scale = 100; // Must be very large
+    let scale = 100;
     for (let i = 0; i < cube_vertex.length; i+=5) {
         cube_vertex[i] *= scale;
         cube_vertex[i+1] *= scale;
@@ -211,12 +205,12 @@ function main() {
     }
 
     var cube_faces = [
-        0, 1, 2,   0, 2, 3,
-        4, 5, 6,   4, 6, 7,
-        8, 9,10,   8,10,11,
-        12,13,14,  12,14,15,
-        16,17,18,  16,18,19,
-        20,21,22,  20,22,23
+        0, 1, 2,  0, 2, 3,
+        4, 5, 6,  4, 6, 7,
+        8, 9,10,  8,10,11,
+        12,13,14, 12,14,15,
+        16,17,18, 16,18,19,
+        20,21,22, 20,22,23
     ];
 
     var CUBE_VERTEX = GL.createBuffer();
@@ -228,9 +222,7 @@ function main() {
     GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, new Uint16Array(cube_faces), GL.STATIC_DRAW);
     
     var skyboxModelMatrix = LIBS.get_I4(); 
-    // --- KODE BARU: Geser Skybox ke bawah ---
-    // Angka ini harus cukup besar karena skala Skybox Anda 100
-    LIBS.translateY(skyboxModelMatrix, -3.0);
+    LIBS.translateY(skyboxModelMatrix, -3.0); 
 
 // ----------------------------------------------------------------------
 
@@ -253,7 +245,6 @@ function main() {
         return texture;
     };
 
-    // NOTE: Ensure you have a 'skybox.png' file in the correct location
     var cube_texture = load_texture("skybox.png");
 
 // ----------------------------------------------------------------------
@@ -261,7 +252,7 @@ function main() {
     /*========================= MATRICES & CONTROLS ========================= */
     var PROJMATRIX = LIBS.get_projection(40, CANVAS.width / CANVAS.height, 1, 100);
     var VIEWMATRIX = LIBS.get_I4();
-    LIBS.translateZ(VIEWMATRIX, -10); // Pull camera back
+    LIBS.translateZ(VIEWMATRIX, -10); 
 
     var drag = false;
     var x_prev, y_prev;
@@ -287,6 +278,13 @@ function main() {
         e.preventDefault();
     });
 
+    // --- Keyboard listener to trigger the bowing animation ---
+    window.addEventListener("keydown", function(e) {
+        if (e.key === 'b' || e.key === 'B') {
+            kirlia.bowing();
+        }
+    });
+
     /*========================= DRAWING ========================= */
     GL.enable(GL.DEPTH_TEST);
     GL.depthFunc(GL.LEQUAL);
@@ -295,7 +293,6 @@ function main() {
 
     function animate(time) {
         GL.viewport(0, 0, CANVAS.width, CANVAS.height);
-        // Clear both color and depth buffer at the start of the frame
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
         if (!drag) {
@@ -316,16 +313,13 @@ function main() {
         GL.uniformMatrix4fv(_sky_Pmatrix, false, PROJMATRIX);
         GL.uniformMatrix4fv(_sky_Vmatrix, false, VIEWMATRIX);
         
-        // Apply the same rotation to the skybox
         var skyboxRenderMatrix = LIBS.multiply(rotation, skyboxModelMatrix);
         GL.uniformMatrix4fv(_sky_Mmatrix, false, skyboxRenderMatrix);
 
         // Bind Buffers
         GL.bindBuffer(GL.ARRAY_BUFFER, CUBE_VERTEX);
-        // Position attribute layout: 3 floats, start at 0, total stride is 5 floats (20 bytes)
         GL.vertexAttribPointer(_sky_position, 3, GL.FLOAT, false, 4 * 5, 0); 
-        // UV attribute layout: 2 floats, start at 3rd float (12 bytes), total stride is 5 floats (20 bytes)
-        GL.vertexAttribPointer(_sky_uv,       2, GL.FLOAT, false, 4 * 5, 4 * 3);
+        GL.vertexAttribPointer(_sky_uv, 2, GL.FLOAT, false, 4 * 5, 4 * 3);
         
         GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, CUBE_FACES);
         
@@ -336,7 +330,7 @@ function main() {
 
         /*========================= 2. SCENE OBJECTS DRAW (CHARACTERS & FLOOR) ========================= */
         
-        GL.useProgram(COLOR_SHADER_PROGRAM); // SWITCH BACK TO COLOR SHADER
+        GL.useProgram(COLOR_SHADER_PROGRAM); 
 
         // Set the projection and view matrices for all objects
         GL.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
@@ -345,25 +339,23 @@ function main() {
         /*--- FLOOR DRAW ---*/
         var floorRenderMatrix = LIBS.multiply(rotation, floorModelMatrix);
         GL.uniformMatrix4fv(_Mmatrix, false, floorRenderMatrix);
-        GL.uniform3fv(_uColor, [0.4, 0.5, 0.4]); // Grey-Green Floor Color
+        GL.uniform3fv(_uColor, [0.4, 0.5, 0.4]); 
 
         GL.bindBuffer(GL.ARRAY_BUFFER, floorVertexBuffer);
-        // Position only: 3 floats, start at 0, stride 0 (tightly packed)
         GL.vertexAttribPointer(_position, 3, GL.FLOAT, false, 0, 0); 
         
-        // IMPORTANT: Temporarily disable the UV attribute since the floor mesh doesn't have it, 
-        // and the shader program expects only position. (A better solution is a dedicated simple shader, 
-        // but disabling it works for now if your character meshes only use position and not UV either.)
-        // Since the color shader only has 'position', we rely on the character setup handling its VAO/VBOs.
-
         GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, floorIndexBuffer);
         GL.drawElements(GL.TRIANGLES, floorIndices.length, GL.UNSIGNED_SHORT, 0);
 
-
         /*--- CHARACTER DRAW ---*/
+        
+        // Ralts
+        var raltsRenderMatrix = LIBS.multiply(rotation, raltsModelMatrix);
+        ralts.render(raltsRenderMatrix);
+        
         // Kirlia 
         var kirliaRenderMatrix = LIBS.multiply(rotation, kirliaModelMatrix);
-        kirlia.render(kirliaRenderMatrix);
+        kirlia.render(kirliaRenderMatrix, time);
 
         // Gardevoir 
         var gardevoirRenderMatrix = LIBS.multiply(rotation, gardevoirModelMatrix);
@@ -376,6 +368,6 @@ function main() {
         GL.flush();
         window.requestAnimationFrame(animate);
     }
-    animate(0);
+    window.requestAnimationFrame(animate);
 }
 window.addEventListener("load", main);
