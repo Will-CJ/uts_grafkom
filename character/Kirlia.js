@@ -74,33 +74,44 @@ export class Kirlia {
         LIBS.translateY(legRightBottom.POSITION_MATRIX, -0.18);
         legRightTop.childs.push(legRightBottom);
         
-        // Tangan Kiri
-        const ArmLeftTopRadius = 0.016;
-        const ArmLeftTopHeight = 0.26;
-        const ArmLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftTopRadius, ArmLeftTopHeight, 30, WHITE);
-        LIBS.rotateZ(ArmLeftTop.POSITION_MATRIX, -Math.PI / 2);
-        LIBS.translateY(ArmLeftTop.POSITION_MATRIX, 0.07);
-        LIBS.translateX(ArmLeftTop.POSITION_MATRIX, -0.15);
-        this.body.childs.push(ArmLeftTop);
-        
-        const ArmLeftBottomRadius = 0.1;
-        const ArmLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftBottomRadius-0.075, ArmLeftBottomRadius+0.01, ArmLeftBottomRadius-0.075, 30, 30, 360, WHITE);
-        LIBS.translateY(ArmLeftBottom.POSITION_MATRIX, -0.2);
-        ArmLeftTop.childs.push(ArmLeftBottom);
-        
-        // Tangan Kanan
-        const ArmRightTopRadius = 0.016;
-        const ArmRightTopHeight = 0.26;
-        const ArmRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightTopRadius, ArmRightTopHeight, 30, WHITE);
-        LIBS.rotateZ(ArmRightTop.POSITION_MATRIX, Math.PI / 2);
-        LIBS.translateY(ArmRightTop.POSITION_MATRIX, 0.07);
-        LIBS.translateX(ArmRightTop.POSITION_MATRIX, 0.15);
-        this.body.childs.push(ArmRightTop);
-        
-        const ArmRightBottomRadius = 0.1;
-        const ArmRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightBottomRadius-0.075, ArmRightBottomRadius+0.01, ArmRightBottomRadius-0.075, 30, 30, 360, WHITE);
-        LIBS.translateY(ArmRightBottom.POSITION_MATRIX, -0.2);
-        ArmRightTop.childs.push(ArmRightBottom);
+       // Tangan Kiri
+       const ArmLeftTopRadius = 0.016;
+       const ArmLeftTopHeight = 0.26;
+       const ArmLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftTopRadius, ArmLeftTopHeight, 30, WHITE);
+       LIBS.rotateZ(ArmLeftTop.POSITION_MATRIX, -Math.PI / 2);
+       LIBS.rotateY(ArmLeftTop.POSITION_MATRIX, Math.PI / 5);
+       LIBS.rotateX(ArmLeftTop.POSITION_MATRIX, Math.PI / 8);
+       LIBS.translateY(ArmLeftTop.POSITION_MATRIX, 0.04);
+       LIBS.translateX(ArmLeftTop.POSITION_MATRIX, -0.1);
+       LIBS.translateZ(ArmLeftTop.POSITION_MATRIX, 0.07);
+       this.body.childs.push(ArmLeftTop);
+       
+       const ArmLeftBottomRadius = 0.1;
+       const ArmLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftBottomRadius-0.075, ArmLeftBottomRadius+0.01, ArmLeftBottomRadius-0.075, 30, 30, 360, WHITE);
+       LIBS.translateZ(ArmLeftBottom.POSITION_MATRIX, 0.08);
+       LIBS.translateY(ArmLeftBottom.POSITION_MATRIX, -0.08);
+       LIBS.rotateX(ArmLeftBottom.POSITION_MATRIX, Math.PI / 3);
+       ArmLeftTop.childs.push(ArmLeftBottom);
+       
+       // Tangan Kanan
+       const ArmRightTopRadius = 0.016;
+       const ArmRightTopHeight = 0.26;
+       const ArmRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightTopRadius, ArmRightTopHeight, 30, WHITE);
+       LIBS.rotateZ(ArmRightTop.POSITION_MATRIX, Math.PI / 2);
+       LIBS.rotateY(ArmRightTop.POSITION_MATRIX, -Math.PI / 5);
+       LIBS.rotateX(ArmRightTop.POSITION_MATRIX, Math.PI / 8);
+       LIBS.translateY(ArmRightTop.POSITION_MATRIX, 0.04);
+       LIBS.translateX(ArmRightTop.POSITION_MATRIX, 0.1);
+       LIBS.translateZ(ArmRightTop.POSITION_MATRIX, 0.07);
+       this.body.childs.push(ArmRightTop);
+       
+       const ArmRightBottomRadius = 0.1;
+       const ArmRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightBottomRadius-0.075, ArmRightBottomRadius+0.01, ArmRightBottomRadius-0.075, 30, 30, 360, WHITE);
+       LIBS.translateZ(ArmRightBottom.POSITION_MATRIX, 0.08);
+       LIBS.translateY(ArmRightBottom.POSITION_MATRIX, -0.08);
+       LIBS.rotateX(ArmRightBottom.POSITION_MATRIX, Math.PI / 3);
+       ArmRightTop.childs.push(ArmRightBottom);
+
         
         // Kepala Putih
         const headRadiusWhite = 0.18;
