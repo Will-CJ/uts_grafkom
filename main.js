@@ -3,6 +3,7 @@
 import { Kirlia } from "./character/Kirlia.js";
 import { Gardevoir } from "./character/Gardevoir.js"; // <-- Import Gardevoir
 import { Gallade } from "./character/Gallade.js"; // <-- Import Gardevoir
+import { Ralts } from "./character/Ralts.js"; // <-- Import Gardevoir
 
 function main() {
     /** @type {HTMLCanvasElement} */
@@ -63,11 +64,16 @@ function main() {
     var _uColor = GL.getUniformLocation(SHADER_PROGRAM, "uColor"); // <-- Ambil lokasi uniform warna
     
     /*========================= OBJEK ========================= */
+    const ralts = new Ralts(GL, SHADER_PROGRAM, _position, _Mmatrix);
+    const raltsModelMatrix = LIBS.get_I4();
+    LIBS.translateX(raltsModelMatrix, -2.5);
+    LIBS.scale(raltsModelMatrix, 1.5, 1.5, 1.5);
+    ralts.setup();
     
     // --- Kirlia Setup ---
     const kirlia = new Kirlia(GL, SHADER_PROGRAM, _position, _Mmatrix);
     const kirliaModelMatrix = LIBS.get_I4();
-    LIBS.translateX(kirliaModelMatrix, -1.5); 
+    LIBS.translateX(kirliaModelMatrix, -1); 
     LIBS.translateY(kirliaModelMatrix, 0.3); 
     LIBS.scale(kirliaModelMatrix, 1.2, 1.2, 1.2);
     kirlia.setup();
@@ -79,14 +85,14 @@ function main() {
     
     // Atur posisi global untuk Gardevoir (geser ke kanan)
     const gardevoirModelMatrix = LIBS.get_I4();
-    // LIBS.translateX(gardevoirModelMatrix, 1.0); // Geser Gardevoir ke kanan
+    LIBS.translateX(gardevoirModelMatrix, 1.0); // Geser Gardevoir ke kanan
     
     // Setup objek Gardevoir (membuat mesh dan buffer)
     gardevoir.setup();
 
     const gallade = new Gallade(GL, SHADER_PROGRAM, _position, _Mmatrix);
     const galladeModelMatrix = LIBS.get_I4();
-    LIBS.translateX(galladeModelMatrix, 1.5); // Geser Kirlia ke kiri
+    LIBS.translateX(galladeModelMatrix, 2.5); // Geser Kirlia ke kiri
     gallade.setup();
 
     /*========================= MATRICES ========================= */
@@ -142,6 +148,9 @@ function main() {
 
         GL.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
         GL.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
+
+        var raltsRenderMatrix = LIBS.multiply(rotation, raltsModelMatrix);
+        ralts.render(raltsRenderMatrix);
 
         // 1. Kirlia (Matriks Render = Rotasi Mouse * Posisi Kirlia)
         var kirliaRenderMatrix = LIBS.multiply(rotation, kirliaModelMatrix);
