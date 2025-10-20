@@ -67,7 +67,9 @@ function main() {
     // --- Kirlia Setup ---
     const kirlia = new Kirlia(GL, SHADER_PROGRAM, _position, _Mmatrix);
     const kirliaModelMatrix = LIBS.get_I4();
-    LIBS.translateX(kirliaModelMatrix, -1.5); // Geser Kirlia ke kiri
+    LIBS.translateX(kirliaModelMatrix, -1.5); 
+    LIBS.translateY(kirliaModelMatrix, 0.3); 
+    LIBS.scale(kirliaModelMatrix, 1.2, 1.2, 1.2);
     kirlia.setup();
     
     // --- Gardevoir Setup ---
