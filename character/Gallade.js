@@ -25,7 +25,7 @@ export class Gallade {
     kakiKanan = null; // Cone (celana)
     pipiKanan = null; // Cone
     pipiKiri = null; // Cone
-    
+
     // Warna-warna
     COLOR_HIJAU = [0.15, 0.6, 0.4];
     COLOR_PUTIH = [0.9, 0.95, 0.95];
@@ -42,6 +42,9 @@ export class Gallade {
         this.SHADER_PROGRAM = SHADER_PROGRAM;
         this._position = _position;
         this._MMatrix = _MMatrix;
+        const LIGHT_PINK = [1.0, 0.467, 0.486];
+        const BLACK = [0.0, 0.0, 0.0];
+        const eyeRadiusWhite = 0.05;
         
         // --- DATA KURVA UNTUK B-SPLINE ---
         // Profil untuk kepala hijau (kurva yang diputar) - (X, Y)
@@ -105,7 +108,114 @@ export class Gallade {
         // Kepala Putih (Ellipsoid) - Basis wajah
         this.kepalaPutih = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, 0.23, 0.23, 0.23, 20, 20, 360, this.COLOR_PUTIH);
         LIBS.translateY(this.kepalaPutih.POSITION_MATRIX, 0.5);
+
+        // 1. Mata Kiri (Bagian Putih/Pink)
+        // const eyeRadiusWhite = 0.05; // <-- Dihapus karena sudah dideklarasi di atas
+        const leftEye = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, eyeRadiusWhite, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
+        LIBS.translateY(leftEye.POSITION_MATRIX, -0.035); // Posisi Y relatif ke kepalaPutih (0.5)
+        LIBS.translateX(leftEye.POSITION_MATRIX, -0.11); // Geser ke kiri
+        LIBS.translateZ(leftEye.POSITION_MATRIX, 0.16); // Geser ke depan (Z positif)
+        LIBS.rotateX(leftEye.POSITION_MATRIX, Math.PI / 15);
+        LIBS.rotateY(leftEye.POSITION_MATRIX, -Math.PI / 7);
+        this.kepalaPutih.childs.push(leftEye); // Mata adalah anak dari kepalaPutih
+
+        // 2. Mata Kanan (Bagian Putih/Pink)
+        const RightEye = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, eyeRadiusWhite, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
+        LIBS.translateY(RightEye.POSITION_MATRIX, -0.035); // Posisi Y relatif ke kepalaPutih (0.5)
+        LIBS.translateX(RightEye.POSITION_MATRIX, 0.11); // Geser ke kanan
+        LIBS.translateZ(RightEye.POSITION_MATRIX, 0.16);  // Geser ke depan (Z positif)
+        LIBS.rotateX(RightEye.POSITION_MATRIX, Math.PI / 15);
+        LIBS.rotateY(RightEye.POSITION_MATRIX, Math.PI / 7);
+        this.kepalaPutih.childs.push(RightEye); // Mata adalah anak dari kepalaPutih
+
+        // 3. Pupil Kiri (Anak dari Mata Kiri)
+        const pupilRadius = 0.01;
+        const leftPupil = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
+        LIBS.translateY(leftPupil.POSITION_MATRIX, -0.02); // Posisi Y relatif ke leftEye
+        LIBS.translateZ(leftPupil.POSITION_MATRIX, 0.04); // Posisi Z relatif ke leftEye
+        LIBS.rotateX(leftPupil.POSITION_MATRIX, Math.PI / 15);
+        leftEye.childs.push(leftPupil); // Pupil adalah anak dari leftEye
+
+        // 4. Pupil Kanan (Anak dari Mata Kanan)
+        const rightPupil = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
+        LIBS.translateY(rightPupil.POSITION_MATRIX, -0.02); // Posisi Y relatif ke RightEye
+        LIBS.translateZ(rightPupil.POSITION_MATRIX, 0.04); // Posisi Z relatif ke RightEye
+        LIBS.rotateX(rightPupil.POSITION_MATRIX, Math.PI / 15);
+        RightEye.childs.push(rightPupil); // Pupil adalah anak dari RightEye
         
+        // =============================================================
+        //              KUMIS (dua duri pipi menghadap depan)
+        // =============================================================
+        const MUSTACHE_BASE_R = 0.12;   // radius pangkal (sebelum scaling)
+        const MUSTACHE_LEN     = 0.275;  // panjang (height) cone
+        const MUSTACHE_Y       = 0.075; // sedikit di bawah garis mata
+        const MUSTACHE_Z       = -0.05;  // menonjol ke depan
+        const MUSTACHE_X_OFF   = 0.225; // offset kiri/kanan dari tengah
+        const MUSTACHE_YAW     = LIBS.degToRad(50); // sedikit keluar dari wajah
+
+        // Kanan (di sumbu +X)
+        this.kumisKanan = new Cone(
+        GL, SHADER_PROGRAM, _position, _MMatrix,
+        MUSTACHE_BASE_R, 0, 360, 0, 0, MUSTACHE_LEN, 30, this.COLOR_PUTIH
+        );
+        // arahkan ke depan (sumbu Z)
+        LIBS.rotateX(this.kumisKanan.POSITION_MATRIX, LIBS.degToRad(300));
+        // sedikit yaw keluar
+        LIBS.rotateY(this.kumisKanan.POSITION_MATRIX, -MUSTACHE_YAW + LIBS.degToRad(-1));
+        // sedikit gepeng (lebih tajam & tipis)
+        LIBS.scale(this.kumisKanan.POSITION_MATRIX, 0.05, 1.2, 0.25);
+        // posisikan relatif ke kepala putih
+        LIBS.translateX(this.kumisKanan.POSITION_MATRIX,  MUSTACHE_X_OFF + 0.035);
+        LIBS.translateY(this.kumisKanan.POSITION_MATRIX,  MUSTACHE_Y - 0.02);
+        LIBS.translateZ(this.kumisKanan.POSITION_MATRIX,  MUSTACHE_Z + 0.03);
+
+        // Kiri (mirror di sumbu -X)
+        this.kumisKiri = new Cone(
+        GL, SHADER_PROGRAM, _position, _MMatrix,
+        MUSTACHE_BASE_R, 0, 360, 0, 0, MUSTACHE_LEN, 30, this.COLOR_PUTIH
+        );
+        LIBS.rotateX(this.kumisKiri.POSITION_MATRIX, LIBS.degToRad(300));
+        LIBS.rotateY(this.kumisKiri.POSITION_MATRIX, MUSTACHE_YAW + LIBS.degToRad(-1));
+        LIBS.scale(this.kumisKiri.POSITION_MATRIX, 0.05, 1.2, 0.2);
+        LIBS.translateX(this.kumisKiri.POSITION_MATRIX,  -MUSTACHE_X_OFF - 0.035);
+        LIBS.translateY(this.kumisKiri.POSITION_MATRIX,  MUSTACHE_Y - 0.02);
+        LIBS.translateZ(this.kumisKiri.POSITION_MATRIX,  MUSTACHE_Z + 0.045);
+
+        // tempel ke kepala biar ikut gerak
+        this.kepalaPutih.childs.push(this.kumisKanan, this.kumisKiri);
+
+        const MUSTACHE_LEN_SMALL = MUSTACHE_LEN * 0.7;      // lebih pendek
+        const MUSTACHE_Y_SMALL   = MUSTACHE_Y - 0.22;       // lebih ke bawah
+        const MUSTACHE_Z_SMALL   = MUSTACHE_Z + 0.075;      // agak lebih maju
+        const MUSTACHE_DOWN_ANGLE = LIBS.degToRad(225);     // arahkan turun
+
+        // Kanan bawah
+        this.kumisKananBawah = new Cone(
+        GL, SHADER_PROGRAM, _position, _MMatrix,
+        MUSTACHE_BASE_R * 0.65, 0, 360, 0, 0, MUSTACHE_LEN_SMALL, 30, this.COLOR_PUTIH
+        );
+        LIBS.rotateX(this.kumisKananBawah.POSITION_MATRIX, MUSTACHE_DOWN_ANGLE);
+        LIBS.rotateY(this.kumisKananBawah.POSITION_MATRIX, -MUSTACHE_YAW + LIBS.degToRad(-1));
+        LIBS.scale(this.kumisKananBawah.POSITION_MATRIX, 0.035, 1.0, 0.18);
+        LIBS.translateX(this.kumisKananBawah.POSITION_MATRIX, MUSTACHE_X_OFF + 0.015);
+        LIBS.translateY(this.kumisKananBawah.POSITION_MATRIX, MUSTACHE_Y_SMALL);
+        LIBS.translateZ(this.kumisKananBawah.POSITION_MATRIX, MUSTACHE_Z_SMALL - 0.022);
+
+        // Kiri bawah
+        this.kumisKiriBawah = new Cone(
+        GL, SHADER_PROGRAM, _position, _MMatrix,
+        MUSTACHE_BASE_R * 0.65, 0, 360, 0, 0, MUSTACHE_LEN_SMALL, 30, this.COLOR_PUTIH
+        );
+        LIBS.rotateX(this.kumisKiriBawah.POSITION_MATRIX, MUSTACHE_DOWN_ANGLE);
+        LIBS.rotateY(this.kumisKiriBawah.POSITION_MATRIX, MUSTACHE_YAW + LIBS.degToRad(-1));
+        LIBS.scale(this.kumisKiriBawah.POSITION_MATRIX, 0.035, 1.0, 0.18);
+        LIBS.translateX(this.kumisKiriBawah.POSITION_MATRIX, -MUSTACHE_X_OFF - 0.015);
+        LIBS.translateY(this.kumisKiriBawah.POSITION_MATRIX, MUSTACHE_Y_SMALL + 0.01);
+        LIBS.translateZ(this.kumisKiriBawah.POSITION_MATRIX, MUSTACHE_Z_SMALL);
+
+        // tempel ke kepala juga
+        this.kepalaPutih.childs.push(this.kumisKananBawah, this.kumisKiriBawah);
+
         // Telinga Kiri (Ellipsoid Oval - Mirip Telinga Bundar Asli Anda)
         this.telingaKiri = new Ellipsoid(
             this.GL, this.SHADER_PROGRAM, this._position, this._MMatrix, 
@@ -201,12 +311,12 @@ export class Gallade {
         LIBS.translateZ(this.headGreen5.POSITION_MATRIX, 0.0005); // Geser maju sedikit setelah rotasi
         this.kepalaPutih.childs.push(this.headGreen5);
         
-        // Kepala Hijau Utama/Leher/Penghubung (Tetap)
-        const headRadiusGreen = 0.18;
-        this.kepalaHijau = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, headRadiusGreen+0.04, headRadiusGreen, headRadiusGreen+0.06, 30, 30, 360, LIGHT_PASTEL_GREEN);
-        const headGreenPositionY = (bodyHeight / 2) + headRadiusGreen - 0.05;
-        LIBS.translateY(this.kepalaHijau.POSITION_MATRIX, headGreenPositionY);
-        LIBS.translateZ(this.kepalaHijau.POSITION_MATRIX, -0.0001);
+        // Kepala Hijau Utama/Leher/Penghubung (Tetap)
+        const headRadiusGreen = 0.18;
+        this.kepalaHijau = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, headRadiusGreen+0.04, headRadiusGreen, headRadiusGreen+0.06, 30, 30, 360, LIGHT_PASTEL_GREEN);
+        const headGreenPositionY = (bodyHeight / 2) + headRadiusGreen - 0.05;
+        LIBS.translateY(this.kepalaHijau.POSITION_MATRIX, headGreenPositionY);
+        LIBS.translateZ(this.kepalaHijau.POSITION_MATRIX, -0.0001);
         
         // PENTING: Sambungkan kepalaPutih ke badan, dan kepalaHijau ke badan/pinggang
         this.badanBiru.childs.push(this.kepalaPutih); // Kepala Putih sebagai anak badan
