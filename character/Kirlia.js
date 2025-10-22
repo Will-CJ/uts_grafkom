@@ -4,6 +4,8 @@ import { Ellipsoid } from "../object/Ellipsoid.js";
 import { Trapezoid } from "../object/Trapezoid.js";
 import { BSplineExtruded } from "../object/BSplineExtruded.js";
 import { Cone } from "../object/Cone.js";
+import { Crescent } from "../object/Crescent.js"
+import { ModifiedEllipsoid } from "../object/ModifiedEllipsoid.js"
 
 // Definisikan state animasi pergerakan Z
 const MOVEMENT_STATE = {
@@ -16,6 +18,13 @@ const MOVEMENT_STATE = {
 // Buat kelas untuk Pokémon Kirlia
 export class Kirlia {
     constructor(GL, SHADER_PROGRAM, _position, _Mmatrix) {
+        // --- Menyimpan parameter GL (PENTING untuk mencegah error setup) ---
+        this.GL = GL;
+        this.SHADER_PROGRAM = SHADER_PROGRAM;
+        this._position = _position;
+        this._Mmatrix = _Mmatrix;
+        const GL_PARAMS = [this.GL, this.SHADER_PROGRAM, this._position, this._Mmatrix];
+
         // Mendefinisikan warna-warna yang digunakan
         const WHITE = [1.0, 1.0, 1.0];
         const LIGHT_PASTEL_GREEN = [0.733, 0.984, 0.741];
@@ -24,8 +33,8 @@ export class Kirlia {
 
         // --- Animation State Variables (Bowing) ---
         this.bowStartTime = 0;
-        this.bowDuration = 2000; // 2 seconds in milliseconds
-        this.maxBowAngle = 90 * Math.PI / 180; // 90 degrees in radians
+        this.bowDuration = 1800; // 2 seconds in milliseconds
+        this.maxBowAngle = 70 * Math.PI / 180; // 90 degrees in radians
         this.currentBowAngle = 0;
 
         // --- Animation State Variables (Movement) ---
@@ -36,12 +45,12 @@ export class Kirlia {
         this.targetZ = 3.0; // Jarak translasi Z
         this.currentZ = 0.0; // Posisi Z saat ini
         
-        // Tambahkan variabel floating state di constructor
-        this.isFloating = true;
-        this.floatAmplitude = 0.07; // Jarak naik-turun (misalnya 5cm)
-        this.floatSpeed = 0.002;
-        
-        // Membuat semua bagian tubuh Kirlia... 
+        // --- Breathing/Idle Movement Variables (BARU) ---
+        this.breatheBodyAmplitude = 0.02; // Naik-turun badan (0.02)
+        this.breatheHeadAmplitude = 0.01; // Naik-turun kepala (0.01)
+        this.breatheSpeed = 0.005; // Kecepatan bernafas (sama untuk semua)
+
+        // --- Membuat semua bagian tubuh Kirlia... ---
         const bodyGreenRadius = 0.1;
         this.bodyGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, bodyGreenRadius-0.01, bodyGreenRadius-0.03, bodyGreenRadius-0.01, 30, 30, 360, LIGHT_PASTEL_GREEN);
         
@@ -66,70 +75,65 @@ export class Kirlia {
         LIBS.translateY(middleBody.POSITION_MATRIX, 0.035);
         this.body.childs.push(middleBody);
         
+        //Kaki
+        const legLeftTopRadius = 0.018;
+        const legLeftTopHeight = 0.27;
         this.legRoot = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, bodyGreenRadius-0.01, bodyGreenRadius-0.03, bodyGreenRadius-0.01, 30, 30, 360, LIGHT_PASTEL_GREEN);
         LIBS.translateY(this.legRoot.POSITION_MATRIX, -0.14);
 
-        const legLeftTopRadius = 0.018;
-        const legLeftTopHeight = 0.27;
-        const legLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, legLeftTopRadius, legLeftTopHeight, 30, LIGHT_PASTEL_GREEN);
-        LIBS.translateY(legLeftTop.POSITION_MATRIX, -0.16);
-        LIBS.translateX(legLeftTop.POSITION_MATRIX, -0.06);
-        this.legRoot.childs.push(legLeftTop);
+        this.legLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, legLeftTopRadius, legLeftTopHeight, 30, LIGHT_PASTEL_GREEN);
+        this.legLeftTopHeight = legLeftTopHeight; // Simpan tinggi untuk pivot
+        LIBS.translateY(this.legLeftTop.POSITION_MATRIX, -0.16);
+        LIBS.translateX(this.legLeftTop.POSITION_MATRIX, -0.06);
+        this.legRoot.childs.push(this.legLeftTop);
         
         const legLeftBottomRadius = 0.1;
         const legLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legLeftBottomRadius-0.075, legLeftBottomRadius+0.01, legLeftBottomRadius-0.075, 30, 30, 360, LIGHT_PASTEL_GREEN);
         LIBS.translateY(legLeftBottom.POSITION_MATRIX, -0.18);
-        legLeftTop.childs.push(legLeftBottom);
+        this.legLeftTop.childs.push(legLeftBottom);
         
         const legRightTopRadius = 0.018;
         const legRightTopHeight = 0.27;
-        const legRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, legRightTopRadius, legRightTopHeight, 30, LIGHT_PASTEL_GREEN);
-        LIBS.translateY(legRightTop.POSITION_MATRIX, -0.16);
-        LIBS.translateX(legRightTop.POSITION_MATRIX, 0.06);
-        this.legRoot.childs.push(legRightTop);
+        this.legRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, legRightTopRadius, legRightTopHeight, 30, LIGHT_PASTEL_GREEN);
+        this.legRightTopHeight = legRightTopHeight; // Simpan tinggi untuk pivot
+        LIBS.translateY(this.legRightTop.POSITION_MATRIX, -0.16);
+        LIBS.translateX(this.legRightTop.POSITION_MATRIX, 0.06);
+        this.legRoot.childs.push(this.legRightTop);
         
         const legRightBottomRadius = 0.1;
         const legRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legRightBottomRadius-0.075, legRightBottomRadius+0.01, legRightBottomRadius-0.075, 30, 30, 360, LIGHT_PASTEL_GREEN);
         LIBS.translateY(legRightBottom.POSITION_MATRIX, -0.18);
-        legRightTop.childs.push(legRightBottom);
+        this.legRightTop.childs.push(legRightBottom);
         
+        //Tangan (Transformasi dinamis akan diterapkan di render/MOVE_MATRIX)
         const ArmLeftTopRadius = 0.016;
         const ArmLeftTopHeight = 0.26;
-        const ArmLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftTopRadius, ArmLeftTopHeight, 30, WHITE);
-        LIBS.rotateZ(ArmLeftTop.POSITION_MATRIX, -Math.PI / 2);
-        LIBS.rotateY(ArmLeftTop.POSITION_MATRIX, Math.PI / 5);
-        LIBS.rotateX(ArmLeftTop.POSITION_MATRIX, Math.PI / 8);
-        LIBS.translateY(ArmLeftTop.POSITION_MATRIX, 0.04);
-        LIBS.translateX(ArmLeftTop.POSITION_MATRIX, -0.1);
-        LIBS.translateZ(ArmLeftTop.POSITION_MATRIX, 0.07);
-        this.body.childs.push(ArmLeftTop);
+        this.ArmLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftTopRadius, ArmLeftTopHeight, 30, WHITE);
+        this.ArmLeftTopHeight = ArmLeftTopHeight; // Simpan tinggi untuk pivot
+        LIBS.rotateZ(this.ArmLeftTop.POSITION_MATRIX, -Math.PI / 4.5);
+        LIBS.translateX(this.ArmLeftTop.POSITION_MATRIX, -0.1);
+        this.body.childs.push(this.ArmLeftTop);
         
         const ArmLeftBottomRadius = 0.1;
         const ArmLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftBottomRadius-0.075, ArmLeftBottomRadius+0.01, ArmLeftBottomRadius-0.075, 30, 30, 360, WHITE);
-        LIBS.translateZ(ArmLeftBottom.POSITION_MATRIX, 0.08);
-        LIBS.translateY(ArmLeftBottom.POSITION_MATRIX, -0.08);
-        LIBS.rotateX(ArmLeftBottom.POSITION_MATRIX, Math.PI / 3);
-        ArmLeftTop.childs.push(ArmLeftBottom);
+        LIBS.translateY(ArmLeftBottom.POSITION_MATRIX, -0.2);
+        this.ArmLeftTop.childs.push(ArmLeftBottom);
         
         const ArmRightTopRadius = 0.016;
         const ArmRightTopHeight = 0.26;
-        const ArmRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightTopRadius, ArmRightTopHeight, 30, WHITE);
-        LIBS.rotateZ(ArmRightTop.POSITION_MATRIX, Math.PI / 2);
-        LIBS.rotateY(ArmRightTop.POSITION_MATRIX, -Math.PI / 5);
-        LIBS.rotateX(ArmRightTop.POSITION_MATRIX, Math.PI / 8);
-        LIBS.translateY(ArmRightTop.POSITION_MATRIX, 0.04);
-        LIBS.translateX(ArmRightTop.POSITION_MATRIX, 0.1);
-        LIBS.translateZ(ArmRightTop.POSITION_MATRIX, 0.07);
-        this.body.childs.push(ArmRightTop);
+        this.ArmRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightTopRadius, ArmRightTopHeight, 30, WHITE);
+        this.ArmRightTopHeight = ArmRightTopHeight; // Simpan tinggi untuk pivot
+        LIBS.rotateZ(this.ArmRightTop.POSITION_MATRIX, Math.PI / 4.5);
+        LIBS.translateX(this.ArmRightTop.POSITION_MATRIX, 0.1);
+        this.body.childs.push(this.ArmRightTop);
         
         const ArmRightBottomRadius = 0.1;
         const ArmRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightBottomRadius-0.075, ArmRightBottomRadius+0.01, ArmRightBottomRadius-0.075, 30, 30, 360, WHITE);
-        LIBS.translateZ(ArmRightBottom.POSITION_MATRIX, 0.08);
-        LIBS.translateY(ArmRightBottom.POSITION_MATRIX, -0.08);
-        LIBS.rotateX(ArmRightBottom.POSITION_MATRIX, Math.PI / 3);
-        ArmRightTop.childs.push(ArmRightBottom);
+        LIBS.translateY(ArmRightBottom.POSITION_MATRIX, -0.2);
+        this.ArmRightTop.childs.push(ArmRightBottom);
 
         
+        //Kepala
         const headRadiusWhite = 0.18;
         this.head = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusWhite+0.01, headRadiusWhite, headRadiusWhite+0.03, 30, 30, 360, WHITE);
         const headPositionY = (bodyHeight / 2) + headRadiusWhite-0.05;
@@ -145,18 +149,22 @@ export class Kirlia {
         LIBS.translateY(headGreen1.POSITION_MATRIX, 0.01);
         LIBS.rotateZ(headGreen1.POSITION_MATRIX, Math.PI / 2);
         this.head.childs.push(headGreen1);
-        
-        const headGreen2Radius = 0.2;
-        const headGreen2 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _Mmatrix,
-            headGreen2Radius, headGreen2Radius, headGreen2Radius,
-            30, 30, 90, LIGHT_PASTEL_GREEN
+
+        //Rambut depan (Crescent)
+        this.frontHair = new Crescent(
+            ...GL_PARAMS,
+            0.15,  // majorRadius (7)
+            0.17, // minorRadius (8) - Dibuat positif untuk lekukan normal
+            90, // startAngDeg (9)
+            270, // endAngDeg (10)
+            32,  // majorSegments (11)
+            32, // minorSegments (12)
+            LIGHT_PASTEL_GREEN  // color (13)
         );
-        LIBS.translateY(headGreen2.POSITION_MATRIX, 0.01);
-        LIBS.translateZ(headGreen2.POSITION_MATRIX, 0.02);
-        LIBS.rotateZ(headGreen2.POSITION_MATRIX, Math.PI / 2);
-        LIBS.rotateX(headGreen2.POSITION_MATRIX, Math.PI / 4);
-        this.head.childs.push(headGreen2);
+        LIBS.translateZ(this.frontHair.POSITION_MATRIX, 0.06)
+        LIBS.translateY(this.frontHair.POSITION_MATRIX, -0.12)
+        LIBS.rotateZ(this.frontHair.POSITION_MATRIX, LIBS.degToRad(-90))
+        this.head.childs.push(this.frontHair)               
         
         const headGreen3Radius = 0.2;
         const headGreen3 = new Ellipsoid(
@@ -183,43 +191,92 @@ export class Kirlia {
         this.head.childs.push(headGreen4);
         
         const headRadiusGreen = 0.18;
-        const headGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusGreen+0.01, headRadiusGreen, headRadiusGreen+0.03, 30, 30, 360, LIGHT_PASTEL_GREEN);
-        const headGreenPositionY = (bodyHeight / 2) + headRadiusGreen-0.05;
-        LIBS.translateY(headGreen.POSITION_MATRIX, headGreenPositionY);
-        LIBS.translateZ(headGreen.POSITION_MATRIX, -0.0001);
-        this.body.childs.push(headGreen);
+        const headGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusGreen+0.01, headRadiusGreen, headRadiusGreen+0.01, 30, 30, 360, LIGHT_PASTEL_GREEN);
+        LIBS.translateY(headGreen.POSITION_MATRIX, -0.005);
+        LIBS.translateZ(headGreen.POSITION_MATRIX, -0.025);
+        this.head.childs.push(headGreen);
 
-        const eyeRadiusWhite = 0.05;
-        const leftEye = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, eyeRadiusWhite+0.02, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
-        LIBS.translateY(leftEye.POSITION_MATRIX, -0.035);
-        LIBS.translateX(leftEye.POSITION_MATRIX, -0.065);
-        LIBS.translateZ(leftEye.POSITION_MATRIX, 0.14);
-        LIBS.rotateX(leftEye.POSITION_MATRIX, Math.PI / 15);
-        LIBS.rotateY(leftEye.POSITION_MATRIX, -Math.PI / 7);
-        this.head.childs.push(leftEye);
+        //Left Eye
+        this.leftEyeB = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 25, 90, BLACK
+        )
+        LIBS.translateZ(this.leftEyeB.POSITION_MATRIX, 0.03)
+        LIBS.rotateX(this.leftEyeB.POSITION_MATRIX, LIBS.degToRad(13))
+        LIBS.rotateY(this.leftEyeB.POSITION_MATRIX, LIBS.degToRad(-35))
+        this.head.childs.push(this.leftEyeB)
 
-        const RightEye = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, eyeRadiusWhite+0.02, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
-        LIBS.translateY(RightEye.POSITION_MATRIX, -0.035);
-        LIBS.translateX(RightEye.POSITION_MATRIX, 0.065);
-        LIBS.translateZ(RightEye.POSITION_MATRIX, 0.14);
-        LIBS.rotateX(RightEye.POSITION_MATRIX, Math.PI / 15);
-        LIBS.rotateY(RightEye.POSITION_MATRIX, Math.PI / 7);
-        this.head.childs.push(RightEye);
+        this.leftEyeW = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 23, 90, WHITE
+        )
+        LIBS.translateZ(this.leftEyeW.POSITION_MATRIX, 0.00001)
+        this.leftEyeB.childs.push(this.leftEyeW)
 
+        this.leftEyeB2 = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 18, 90, BLACK
+        )
+        LIBS.translateZ(this.leftEyeB2.POSITION_MATRIX, 0.0001)
+        LIBS.rotateX(this.leftEyeB2.POSITION_MATRIX, LIBS.degToRad(4))
+        LIBS.rotateY(this.leftEyeB2.POSITION_MATRIX, LIBS.degToRad(4))
+        this.leftEyeB.childs.push(this.leftEyeB2)
 
-        const pupilRadius = 0.01;
-        const leftPupil = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
-        LIBS.translateY(leftPupil.POSITION_MATRIX, -0.02);
-        LIBS.translateZ(leftPupil.POSITION_MATRIX, 0.04);
-        LIBS.rotateX(leftPupil.POSITION_MATRIX, Math.PI / 15);
-        leftEye.childs.push(leftPupil);
+        this.leftEyeR = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 16, 90, LIGHT_PINK
+        )
+        LIBS.translateZ(this.leftEyeR.POSITION_MATRIX, 0.0002)
+        LIBS.rotateX(this.leftEyeR.POSITION_MATRIX, LIBS.degToRad(4))
+        LIBS.rotateY(this.leftEyeR.POSITION_MATRIX, LIBS.degToRad(4))
+        this.leftEyeB.childs.push(this.leftEyeR)
 
-        const rightPupil = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
-        LIBS.translateY(rightPupil.POSITION_MATRIX, -0.02);
-        LIBS.translateZ(rightPupil.POSITION_MATRIX, 0.04);
-        LIBS.rotateX(rightPupil.POSITION_MATRIX, Math.PI / 15);
-        RightEye.childs.push(rightPupil);
-        
+        this.leftEyeB3 = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 12, 90, BLACK
+        )
+        LIBS.scale(this.leftEyeB3.POSITION_MATRIX, 0.3, 0.5, 1)
+        LIBS.translateZ(this.leftEyeB3.POSITION_MATRIX, 0.003)
+        LIBS.rotateX(this.leftEyeB3.POSITION_MATRIX, LIBS.degToRad(5))
+        LIBS.rotateY(this.leftEyeB3.POSITION_MATRIX, LIBS.degToRad(5))
+        this.leftEyeB.childs.push(this.leftEyeB3)
+
+        //Right Eye
+        this.rightEyeB = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 25, 90, BLACK
+        )
+        LIBS.translateZ(this.rightEyeB.POSITION_MATRIX, 0.03)
+        LIBS.rotateX(this.rightEyeB.POSITION_MATRIX, LIBS.degToRad(13))
+        LIBS.rotateY(this.rightEyeB.POSITION_MATRIX, LIBS.degToRad(35))
+        this.head.childs.push(this.rightEyeB)
+
+        this.rightEyeW = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 23, 90, WHITE
+        )
+        LIBS.translateZ(this.rightEyeW.POSITION_MATRIX, 0.00001)
+        this.rightEyeB.childs.push(this.rightEyeW)
+
+        this.rightEyeB2 = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 18, 90, BLACK
+        )
+        LIBS.translateZ(this.rightEyeB2.POSITION_MATRIX, 0.0001)
+        LIBS.rotateX(this.rightEyeB2.POSITION_MATRIX, LIBS.degToRad(4))
+        LIBS.rotateY(this.rightEyeB2.POSITION_MATRIX, LIBS.degToRad(-4))
+        this.rightEyeB.childs.push(this.rightEyeB2)
+
+        this.rightEyeR = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 16, 90, LIGHT_PINK
+        )
+        LIBS.translateZ(this.rightEyeR.POSITION_MATRIX, 0.0002)
+        LIBS.rotateX(this.rightEyeR.POSITION_MATRIX, LIBS.degToRad(4))
+        LIBS.rotateY(this.rightEyeR.POSITION_MATRIX, LIBS.degToRad(-4))
+        this.rightEyeB.childs.push(this.rightEyeR)
+
+        this.rightEyeB3 = new ModifiedEllipsoid(
+            ...GL_PARAMS, 0.18, 0.18, 0.18, 30, 30, 360, 12, 90, BLACK
+        )
+        LIBS.scale(this.rightEyeB3.POSITION_MATRIX, 0.3, 0.5, 1)
+        LIBS.translateZ(this.rightEyeB3.POSITION_MATRIX, 0.003)
+        LIBS.rotateX(this.rightEyeB3.POSITION_MATRIX, LIBS.degToRad(5))
+        LIBS.rotateY(this.rightEyeB3.POSITION_MATRIX, LIBS.degToRad(-5))
+        this.rightEyeB.childs.push(this.rightEyeB3)
+
+        //Rambut
         const hairBaseA = 0.15;
         const hairBaseB = 0.25;
         const hairHeight = 0.43;
@@ -238,60 +295,62 @@ export class Kirlia {
         LIBS.translateX(hairLeft.POSITION_MATRIX, -0.215);
         this.head.childs.push(hairLeft);
         
+        //Skirt (Semua objek skirt harus diakses melalui 'this.')
         const trapBaseA = 0.1;
         const trapBaseB = 0.2;
         const trapHeight = 0.38;
         const trapDepth = 0.01;
-        const skirtRightMiddle = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA, trapBaseB, trapHeight, trapDepth, WHITE);
-        LIBS.rotateX(skirtRightMiddle.POSITION_MATRIX, -Math.PI / 4);
-        LIBS.rotateY(skirtRightMiddle.POSITION_MATRIX, Math.PI / 2);
-        LIBS.translateY(skirtRightMiddle.POSITION_MATRIX, -0.2);
-        LIBS.translateX(skirtRightMiddle.POSITION_MATRIX, 0.18);
-        this.body.childs.push(skirtRightMiddle);
+        this.skirtRightMiddle = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA, trapBaseB, trapHeight, trapDepth, WHITE);
+        LIBS.rotateX(this.skirtRightMiddle.POSITION_MATRIX, -Math.PI / 4);
+        LIBS.rotateY(this.skirtRightMiddle.POSITION_MATRIX, Math.PI / 2);
+        LIBS.translateY(this.skirtRightMiddle.POSITION_MATRIX, -0.2);
+        LIBS.translateX(this.skirtRightMiddle.POSITION_MATRIX, 0.18);
+        this.body.childs.push(this.skirtRightMiddle);
         
         const trapBaseA1 = 0.1;
         const trapBaseB1 = 0.18;
         const trapHeight1 = 0.38;
         const trapDepth1 = 0.01;
-        const skirtRightLeft = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA1, trapBaseB1, trapHeight1, trapDepth1, WHITE);
-        LIBS.rotateX(skirtRightLeft.POSITION_MATRIX, -Math.PI / 4);
-        LIBS.rotateY(skirtRightLeft.POSITION_MATRIX, Math.PI / 4);
-        LIBS.translateY(skirtRightLeft.POSITION_MATRIX, -0.18);
-        LIBS.translateX(skirtRightLeft.POSITION_MATRIX, 0.1);
-        LIBS.translateZ(skirtRightLeft.POSITION_MATRIX, 0.115);
-        this.body.childs.push(skirtRightLeft);
+        this.skirtRightLeft = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA1, trapBaseB1, trapHeight1, trapDepth1, WHITE);
+        LIBS.rotateX(this.skirtRightLeft.POSITION_MATRIX, -Math.PI / 4);
+        LIBS.rotateY(this.skirtRightLeft.POSITION_MATRIX, Math.PI / 4);
+        LIBS.translateY(this.skirtRightLeft.POSITION_MATRIX, -0.18);
+        LIBS.translateX(this.skirtRightLeft.POSITION_MATRIX, 0.1);
+        LIBS.translateZ(this.skirtRightLeft.POSITION_MATRIX, 0.115);
+        this.body.childs.push(this.skirtRightLeft);
         
-        const skirtRightRight = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA1, trapBaseB1, trapHeight1, trapDepth1, WHITE);
-        LIBS.rotateX(skirtRightRight.POSITION_MATRIX, Math.PI / 4);
-        LIBS.rotateY(skirtRightRight.POSITION_MATRIX, -Math.PI / 4);
-        LIBS.translateY(skirtRightRight.POSITION_MATRIX, -0.18);
-        LIBS.translateX(skirtRightRight.POSITION_MATRIX, 0.1);
-        LIBS.translateZ(skirtRightRight.POSITION_MATRIX, -0.115);
-        this.body.childs.push(skirtRightRight);
+        this.skirtRightRight = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA1, trapBaseB1, trapHeight1, trapDepth1, WHITE);
+        LIBS.rotateX(this.skirtRightRight.POSITION_MATRIX, Math.PI / 4);
+        LIBS.rotateY(this.skirtRightRight.POSITION_MATRIX, -Math.PI / 4);
+        LIBS.translateY(this.skirtRightRight.POSITION_MATRIX, -0.18);
+        LIBS.translateX(this.skirtRightRight.POSITION_MATRIX, 0.1);
+        LIBS.translateZ(this.skirtRightRight.POSITION_MATRIX, -0.115);
+        this.body.childs.push(this.skirtRightRight);
         
-        const skirtLeftMiddle = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA, trapBaseB, trapHeight, trapDepth, WHITE);
-        LIBS.rotateX(skirtLeftMiddle.POSITION_MATRIX, Math.PI / 4);
-        LIBS.rotateY(skirtLeftMiddle.POSITION_MATRIX, Math.PI / 2);
-        LIBS.translateY(skirtLeftMiddle.POSITION_MATRIX, -0.2);
-        LIBS.translateX(skirtLeftMiddle.POSITION_MATRIX, -0.18);
-        this.body.childs.push(skirtLeftMiddle);
+        this.skirtLeftMiddle = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA, trapBaseB, trapHeight, trapDepth, WHITE);
+        LIBS.rotateX(this.skirtLeftMiddle.POSITION_MATRIX, Math.PI / 4);
+        LIBS.rotateY(this.skirtLeftMiddle.POSITION_MATRIX, Math.PI / 2);
+        LIBS.translateY(this.skirtLeftMiddle.POSITION_MATRIX, -0.2);
+        LIBS.translateX(this.skirtLeftMiddle.POSITION_MATRIX, -0.18);
+        this.body.childs.push(this.skirtLeftMiddle);
         
-        const skirtLeftRight = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA1, trapBaseB1, trapHeight1, trapDepth1, WHITE);
-        LIBS.rotateX(skirtLeftRight.POSITION_MATRIX, -Math.PI / 4);
-        LIBS.rotateY(skirtLeftRight.POSITION_MATRIX, -Math.PI / 4);
-        LIBS.translateY(skirtLeftRight.POSITION_MATRIX, -0.18);
-        LIBS.translateX(skirtLeftRight.POSITION_MATRIX, -0.1);
-        LIBS.translateZ(skirtLeftRight.POSITION_MATRIX, 0.115);
-        this.body.childs.push(skirtLeftRight);
+        this.skirtLeftRight = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA1, trapBaseB1, trapHeight1, trapDepth1, WHITE);
+        LIBS.rotateX(this.skirtLeftRight.POSITION_MATRIX, -Math.PI / 4);
+        LIBS.rotateY(this.skirtLeftRight.POSITION_MATRIX, -Math.PI / 4);
+        LIBS.translateY(this.skirtLeftRight.POSITION_MATRIX, -0.18);
+        LIBS.translateX(this.skirtLeftRight.POSITION_MATRIX, -0.1);
+        LIBS.translateZ(this.skirtLeftRight.POSITION_MATRIX, 0.115);
+        this.body.childs.push(this.skirtLeftRight);
         
-        const skirtLeftLeft = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA1, trapBaseB1, trapHeight1, trapDepth1, WHITE);
-        LIBS.rotateX(skirtLeftLeft.POSITION_MATRIX, Math.PI / 4);
-        LIBS.rotateY(skirtLeftLeft.POSITION_MATRIX, Math.PI / 4);
-        LIBS.translateY(skirtLeftLeft.POSITION_MATRIX, -0.18);
-        LIBS.translateX(skirtLeftLeft.POSITION_MATRIX, -0.1);
-        LIBS.translateZ(skirtLeftLeft.POSITION_MATRIX, -0.115);
-        this.body.childs.push(skirtLeftLeft);
+        this.skirtLeftLeft = new Trapezoid(GL, SHADER_PROGRAM, _position, _Mmatrix, trapBaseA1, trapBaseB1, trapHeight1, trapDepth1, WHITE);
+        LIBS.rotateX(this.skirtLeftLeft.POSITION_MATRIX, Math.PI / 4);
+        LIBS.rotateY(this.skirtLeftLeft.POSITION_MATRIX, Math.PI / 4);
+        LIBS.translateY(this.skirtLeftLeft.POSITION_MATRIX, -0.18);
+        LIBS.translateX(this.skirtLeftLeft.POSITION_MATRIX, -0.1);
+        LIBS.translateZ(this.skirtLeftLeft.POSITION_MATRIX, -0.115);
+        this.body.childs.push(this.skirtLeftLeft);
         
+        //Tanduk (BSpline Extruded)
         const custom_controlPoints = [ 
             [-0.1, 0.0], [-0.05, 0.3], [0.2, 0.1], [0.0, -0.2]
         ];
@@ -324,6 +383,88 @@ export class Kirlia {
     // Metode untuk setup semua buffer
     setup() {
         this.allObjects.forEach(obj => obj.setup());
+    }
+    
+    // =======================================================
+    // --- FUNGSI ANIMASI JALAN & IDLE ---
+    // =======================================================
+
+    applyWalkingAnimation(time) {
+        const speed = 0.007; // Kecepatan ayunan
+        const sinValue = Math.sin(time * speed);  
+        
+        // --- ANIMASI LENGAN (Diperbaiki: Ayunan -10 ke +10) ---
+        const armMaxRot = 20; 
+        const armAmplitude = armMaxRot; // 20 derajat ayunan total, nilai sin * 20
+        const dynamicArmRotation = sinValue * armAmplitude; 
+
+        // Lengan Kiri (Ayunan X)
+        let l_arm_id = LIBS.get_I4();
+        LIBS.set_I4(this.ArmLeftTop.MOVE_MATRIX);
+        LIBS.translateY(l_arm_id, -this.ArmLeftTopHeight / 2); // Pivot
+        let l_arm_id2 = LIBS.get_I4();
+        LIBS.rotateX(l_arm_id2, LIBS.degToRad(dynamicArmRotation)); // Rotasi X
+        l_arm_id = LIBS.multiply(l_arm_id, l_arm_id2);
+        LIBS.translateY(l_arm_id, this.ArmLeftTopHeight / 2); // Pivot balik
+        this.ArmLeftTop.MOVE_MATRIX = LIBS.multiply(this.ArmLeftTop.MOVE_MATRIX, l_arm_id);
+
+        // Lengan Kanan (Berlawanan arah)
+        let r_arm_id = LIBS.get_I4();
+        LIBS.set_I4(this.ArmRightTop.MOVE_MATRIX);
+        LIBS.translateY(r_arm_id, -this.ArmRightTopHeight / 2); // Pivot
+        let r_arm_id2 = LIBS.get_I4();
+        LIBS.rotateX(r_arm_id2, LIBS.degToRad(-dynamicArmRotation)); // Rotasi X (negatif)
+        r_arm_id = LIBS.multiply(r_arm_id, r_arm_id2);
+        LIBS.translateY(r_arm_id, this.ArmRightTopHeight / 2); // Pivot balik
+        this.ArmRightTop.MOVE_MATRIX = LIBS.multiply(this.ArmRightTop.MOVE_MATRIX, r_arm_id);
+        
+        
+        // --- ANIMASI KAKI (Diperbaiki: Ayunan -15 ke +15, berlawanan fase dengan tangan) ---
+        const legMaxRot = 15; 
+        const legAmplitude = legMaxRot; // 15 derajat ayunan total, nilai sin * 15
+        
+        // Ayunan Kaki: [-15, +15]
+        const dynamicLegRotation = sinValue * legAmplitude;
+
+        // Kaki Kiri (Ayunan X)
+        let l_leg_id = LIBS.get_I4();
+        LIBS.set_I4(this.legLeftTop.MOVE_MATRIX);
+        LIBS.translateY(l_leg_id, -this.legLeftTopHeight / 2); // Pivot
+        let l_leg_id2 = LIBS.get_I4();
+        // Kaki Kiri harus BERLAWANAN fase DENGAN LENGAN KIRI:
+        // Lengan Kiri: +sinValue (Maju) -> Kaki Kiri: -sinValue (Mundur)
+        LIBS.rotateX(l_leg_id2, LIBS.degToRad(-dynamicLegRotation)); // Rotasi X (Lawan)
+        l_leg_id = LIBS.multiply(l_leg_id, l_leg_id2);
+        LIBS.translateY(l_leg_id, this.legLeftTopHeight / 2); // Pivot balik
+        this.legLeftTop.MOVE_MATRIX = LIBS.multiply(this.legLeftTop.MOVE_MATRIX, l_leg_id);
+
+        // Kaki Kanan (Ayunan X)
+        let r_leg_id = LIBS.get_I4();
+        LIBS.set_I4(this.legRightTop.MOVE_MATRIX);
+        LIBS.translateY(r_leg_id, -this.legRightTopHeight / 2); // Pivot
+        let r_leg_id2 = LIBS.get_I4();
+        // Kaki Kanan harus BERLAWANAN fase DENGAN LENGAN KANAN:
+        // Lengan Kanan: -sinValue (Mundur) -> Kaki Kanan: +sinValue (Maju)
+        LIBS.rotateX(r_leg_id2, LIBS.degToRad(dynamicLegRotation)); // Rotasi X 
+        r_leg_id = LIBS.multiply(r_leg_id, r_leg_id2);
+        LIBS.translateY(r_leg_id, this.legRightTopHeight / 2); // Pivot balik
+        this.legRightTop.MOVE_MATRIX = LIBS.multiply(this.legRightTop.MOVE_MATRIX, r_leg_id);
+    }
+
+    resetAnimation() {
+        // Reset semua MOVE_MATRIX ke Matriks Identitas (posisi diam)
+        LIBS.set_I4(this.ArmLeftTop.MOVE_MATRIX);
+        LIBS.set_I4(this.ArmRightTop.MOVE_MATRIX);
+        LIBS.set_I4(this.legLeftTop.MOVE_MATRIX); // Reset Kaki
+        LIBS.set_I4(this.legRightTop.MOVE_MATRIX); // Reset Kaki
+        
+        // Matriks Rok tidak perlu di-reset di sini karena mereka akan selalu diatur oleh logika Idle di render()
+        LIBS.set_I4(this.skirtRightMiddle.MOVE_MATRIX);
+        LIBS.set_I4(this.skirtRightLeft.MOVE_MATRIX);
+        LIBS.set_I4(this.skirtRightRight.MOVE_MATRIX);
+        LIBS.set_I4(this.skirtLeftMiddle.MOVE_MATRIX);
+        LIBS.set_I4(this.skirtLeftRight.MOVE_MATRIX);
+        LIBS.set_I4(this.skirtLeftLeft.MOVE_MATRIX);
     }
     
     // =======================================================
@@ -364,22 +505,28 @@ export class Kirlia {
         }
     }
 
-    // Metode untuk render semua objek
+    /**
+     * Metode untuk merender semua objek
+     * @param {array} parentMatrix - Matriks global dari root
+     * @param {number} time - Waktu saat ini (dalam milidetik)
+     */
     render(parentMatrix, time) {
         
         let currentBowAngle = 0;
         let targetZ = this.currentZ;
         
+        // Flag untuk mengontrol animasi lengan/kaki
+        let shouldAnimateLimbs = false;
+
         // --- 1. Update Logika Pergerakan/Bowing berdasarkan State Machine ---
         if (this.currentMovementState !== MOVEMENT_STATE.IDLE) {
             const elapsedTime = time - this.movementStartTime;
+            const walkDuration = this.movementDuration; // Waktu animasi berjalan sebenarnya
             
-            // Durasi total setiap fase (Animasi + Delay)
-            const totalWalkTimeNeeded = this.movementDuration + this.delayDuration; // 2000ms + 1000ms
-            const totalBowTimeNeeded = this.bowDuration + this.delayDuration;       // 2000ms + 1000ms
+            const totalWalkTimeNeeded = walkDuration + this.delayDuration; 
+            const totalBowTimeNeeded = this.bowDuration + this.delayDuration;       
             
             if (this.currentMovementState === MOVEMENT_STATE.BOWING) {
-                // Waktu yang dihabiskan HANYA untuk animasi bowing (tanpa delay)
                 const bowElapsedTime = Math.min(elapsedTime, this.bowDuration);
                 let bowProgress = bowElapsedTime / this.bowDuration;
 
@@ -391,24 +538,19 @@ export class Kirlia {
                     currentBowAngle = this.maxBowAngle * (1 - t);
                 } else {
                     currentBowAngle = 0;
-                    // Animasi Bowing Selesai. Cek apakah delay sudah terpenuhi.
                     if (elapsedTime >= totalBowTimeNeeded) {
-                        // Delay selesai, transisi ke fase berikutnya
                         this.currentMovementState = MOVEMENT_STATE.WALK_BACK;
-                        this.movementStartTime = performance.now(); // Reset waktu untuk WALK_BACK
+                        this.movementStartTime = performance.now(); 
                     }
-                    // JIKA delay belum terpenuhi, state tetap BOWING, currentBowAngle=0, menahan posisi.
                 }
-                
-            } else { 
-                // Logika WALK_FRONT atau WALK_BACK
-                
-                // Waktu yang dihabiskan HANYA untuk animasi jalan (tanpa delay)
-                const walkElapsedTime = Math.min(elapsedTime, this.movementDuration);
-                let progress = walkElapsedTime / this.movementDuration;
+            } else { // WALK_FRONT atau WALK_BACK
+                const walkElapsedTime = Math.min(elapsedTime, walkDuration);
+                let progress = walkElapsedTime / walkDuration;
 
-                if (walkElapsedTime < this.movementDuration) {
-                    // Animasi sedang berjalan
+                if (walkElapsedTime < walkDuration) {
+                    // Animasi perpindahan Z masih berlangsung
+                    shouldAnimateLimbs = true; // Aktifkan animasi tangan/kaki
+                    
                     if (this.currentMovementState === MOVEMENT_STATE.WALK_FRONT) {
                         targetZ = this.targetZ * progress;
                     } else if (this.currentMovementState === MOVEMENT_STATE.WALK_BACK) {
@@ -416,65 +558,92 @@ export class Kirlia {
                         targetZ = startZ * (1 - progress); 
                     }
                 } else {
-                    // Animasi Maju/Mundur selesai (Progress >= 1.0). Cek apakah delay sudah terpenuhi.
+                    // Animasi perpindahan Z selesai. Limbs animation HARUS MATI.
+                    targetZ = (this.currentMovementState === MOVEMENT_STATE.WALK_FRONT) ? this.targetZ : 0.0;
+                    
                     if (elapsedTime >= totalWalkTimeNeeded) {
-                        // Delay Selesai, transisi ke fase berikutnya
-                        
                         if (this.currentMovementState === MOVEMENT_STATE.WALK_FRONT) {
-                            targetZ = this.targetZ; // Tetap di posisi depan
-                            // TRANSISI OTOMATIS: Maju -> BOWING
                             this.currentMovementState = MOVEMENT_STATE.BOWING;
-                            this.movementStartTime = performance.now(); // Reset waktu untuk BOWING
-                            
+                            this.movementStartTime = performance.now(); 
                         } else if (this.currentMovementState === MOVEMENT_STATE.WALK_BACK) {
-                            targetZ = 0.0; // Akhir dari Mundur
                             this.currentMovementState = MOVEMENT_STATE.IDLE;
-                        }
-                    } else {
-                        // Animasi selesai, sedang dalam fase delay. Tahan posisi Z.
-                        if (this.currentMovementState === MOVEMENT_STATE.WALK_FRONT) {
-                            targetZ = this.targetZ; 
-                        } else if (this.currentMovementState === MOVEMENT_STATE.WALK_BACK) {
-                            targetZ = 0.0; 
                         }
                     }
                 }
             }
         } 
         
-        // Catatan: Kondisi transisi Bowing -> WalkBack yang lama di luar if(this.currentMovementState) 
-        // sudah dihapus/dipindahkan ke dalam logika BOWING di atas.
-        
         this.currentZ = targetZ; // Update posisi Z
         
-        // --- 2. Floating Logic ---
-        let floatOffsetMatrix = LIBS.get_I4();
-        if (this.isFloating) {
-            const floatY = Math.sin(time * this.floatSpeed) * this.floatAmplitude;
-            LIBS.translateY(floatOffsetMatrix, floatY);
+        // --- 2. Idle/Breathing Movement Logic ---
+        let idleYOffset = 0.0;
+        let idleBodyMatrix = LIBS.get_I4();
+        let idleHeadMatrix = LIBS.get_I4();
+        let skirtRotAngle = 0; // Rotasi rok
+        
+        const isIdleOrBowing = (this.currentMovementState === MOVEMENT_STATE.IDLE || this.currentMovementState === MOVEMENT_STATE.BOWING);
+        const isSkirtMoving = isIdleOrBowing || (this.currentMovementState === MOVEMENT_STATE.WALK_FRONT || this.currentMovementState === MOVEMENT_STATE.WALK_BACK);
+
+        // Hitung nilai sin untuk Idle/Breathing
+        const sinVal = Math.sin(time * this.breatheSpeed);
+
+        if (!shouldAnimateLimbs) { 
+             // Gerakan Badan (Root/bodyGreen): 0.02
+            idleYOffset = sinVal * this.breatheBodyAmplitude;
+            LIBS.translateY(idleBodyMatrix, idleYOffset);
+            
+            // Gerakan Kepala (Head/this.head): 0.01 (Berlawanan arah)
+            const headYOffset = -sinVal * this.breatheHeadAmplitude;
+            LIBS.translateY(idleHeadMatrix, headYOffset);
+        }
+        
+        // Rotasi Rok (2 derajat) - Diaktifkan selalu
+        if (isSkirtMoving) {
+            skirtRotAngle = LIBS.degToRad(-2 * sinVal); // -2 derajat max saat badan naik.
         }
 
-        // --- 3. Gabungkan Global Transform (Z-Move + Floating) ---
-        let globalTransformMatrix = LIBS.get_I4();
+
+        // --- 3. Animasi Tangan dan Kaki ---
+        if (shouldAnimateLimbs) {
+            this.applyWalkingAnimation(time);
+        } else {
+            this.resetAnimation(); // Matikan animasi tangan/kaki
+        }
         
-        // Terapkan translasi Z (posisi Kirlia di dunia)
+        // Terapkan Rotasi/Goyangan Rok
+        if (isSkirtMoving) {
+            const skirtObjects = [
+                this.skirtRightMiddle, this.skirtRightLeft, this.skirtRightRight, 
+                this.skirtLeftMiddle, this.skirtLeftRight, this.skirtLeftLeft
+            ];
+            
+            skirtObjects.forEach(skirt => {
+                LIBS.set_I4(skirt.MOVE_MATRIX);
+                LIBS.rotateX(skirt.MOVE_MATRIX, skirtRotAngle);
+            });
+        }
+
+
+        // --- 4. Gabungkan Global Transform (Z-Move + Idle/Breathing pada Root) ---
+        let globalTransformMatrix = LIBS.get_I4();
         LIBS.translateZ(globalTransformMatrix, this.currentZ);
-
-        // Gabungkan floating ke matriks global
-        globalTransformMatrix = LIBS.multiply(globalTransformMatrix, floatOffsetMatrix);
-
-        // Gabungkan matriks global Kirlia dengan matriks World/View
+        globalTransformMatrix = LIBS.multiply(globalTransformMatrix, idleBodyMatrix);
         const combinedMatrix = LIBS.multiply(parentMatrix, globalTransformMatrix);
 
 
-        // --- 4. Terapkan Rotasi Bowing pada Body Green (Sub-root) ---
+        // --- 5. Terapkan Transformasi Sub-Root dan Render ---
+        
+        // A. Terapkan Rotasi Bowing pada Body Green (Sub-root utama)
         this.bodyGreen.POSITION_MATRIX = LIBS.get_I4();
-        // Terapkan Rotasi Bowing (currentBowAngle)
         LIBS.rotateX(this.bodyGreen.POSITION_MATRIX, currentBowAngle);
-        // Terapkan Translasi Y awal
         LIBS.translateY(this.bodyGreen.POSITION_MATRIX, this.bodyGreenInitialY); 
         
-        // Render DUA root
+        // B. Terapkan Idle Movement pada Kepala (child dari Body)
+        LIBS.set_I4(this.head.MOVE_MATRIX); 
+        this.head.MOVE_MATRIX = LIBS.multiply(this.head.MOVE_MATRIX, idleHeadMatrix);
+
+
+        // Render DUA root (bodyGreen dan legRoot)
         this.allObjects.forEach(obj => obj.render(combinedMatrix));
     }
 }

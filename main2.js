@@ -118,7 +118,7 @@ function main() {
     const kirlia = new Kirlia(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
     const kirliaModelMatrix = LIBS.get_I4();
     LIBS.translateX(kirliaModelMatrix, -1.0); 
-    LIBS.translateY(kirliaModelMatrix, -0.5); 
+    LIBS.translateY(kirliaModelMatrix, -0.7); 
     LIBS.scale(kirliaModelMatrix, 1.2, 1.2, 1.2);
     kirlia.setup();
     
@@ -252,7 +252,7 @@ function main() {
     /*========================= MATRICES & CONTROLS ========================= */
     var PROJMATRIX = LIBS.get_projection(40, CANVAS.width / CANVAS.height, 1, 100);
     var VIEWMATRIX = LIBS.get_I4();
-    LIBS.translateZ(VIEWMATRIX, -10); 
+    LIBS.translateZ(VIEWMATRIX, -8); 
 
     var drag = false;
     var x_prev, y_prev;
