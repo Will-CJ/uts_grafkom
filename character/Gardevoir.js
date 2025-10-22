@@ -5,6 +5,7 @@ import { Cone } from "../object/Cone.js"
 import { Cylinder } from "../object/Cylinder.js"
 import { Crescent } from "../object/Crescent.js"
 import { BSplineExtruded } from "../object/BSplineExtruded.js"
+import { ModifiedEllipsoid } from "../object/ModifiedEllipsoid.js"
 
 const BODY_PROFILE = [
     [0.0, 0.0], [0.27, 0.6], [0.02, 0.5], [0.0, 0.5]
@@ -80,6 +81,22 @@ export class Gardevoir {
         LIBS.translateY(this.head.POSITION_MATRIX, 0.73);
         this.body.childs.push(this.head);
 
+        //Tanduk
+        this.horn = this.braid1 = new Crescent(
+            ...GL_PARAMS,
+            0.15,   // majorRadius (7)
+            -0.17,// minorRadius (8)
+            90,    // startAngDeg (9)
+            270,      // endAngDeg (10)
+            32,             // majorSegments (11)
+            32,             // minorSegments (12)
+            GREEN           // color (13)
+        );
+        LIBS.translateZ(this.horn.POSITION_MATRIX, 0.06)
+        LIBS.translateY(this.horn.POSITION_MATRIX, -0.12)
+        LIBS.rotateZ(this.horn.POSITION_MATRIX, LIBS.degToRad(-90))
+        this.head.childs.push(this.horn)
+
         // Kepala Hijau
         const headGreen1Radius = 0.198;
         this.headGreen1 = new Ellipsoid(
@@ -90,18 +107,6 @@ export class Gardevoir {
         LIBS.translateY(this.headGreen1.POSITION_MATRIX, 0.01);
         LIBS.rotateZ(this.headGreen1.POSITION_MATRIX, Math.PI / 2);
         this.head.childs.push(this.headGreen1);
-
-        const headGreen2Radius = 0.2;
-        this.headGreen2 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _Mmatrix,
-            headGreen2Radius, headGreen2Radius, headGreen2Radius,
-            30, 30, 90, GREEN
-        );
-        LIBS.translateY(this.headGreen2.POSITION_MATRIX, 0.01);
-        LIBS.translateZ(this.headGreen2.POSITION_MATRIX, 0.02);
-        LIBS.rotateZ(this.headGreen2.POSITION_MATRIX, Math.PI / 2);
-        LIBS.rotateX(this.headGreen2.POSITION_MATRIX, Math.PI / 4);
-        this.head.childs.push(this.headGreen2);
 
         const headGreen3Radius = 0.2;
         this.headGreen3 = new Ellipsoid(
@@ -200,158 +205,175 @@ export class Gardevoir {
         LIBS.rotateY(this.leftWhisker3.POSITION_MATRIX, LIBS.degToRad(30))
         this.head.childs.push(this.leftWhisker3);
 
-
-        // Left Eye
-        this.leftBEye = new Ellipsoid(
+        //Left Eye
+        this.leftEyeB = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            1.5,
-            2,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            25,
+            90,
             BLACK
         )
-        LIBS.scale(this.leftBEye.POSITION_MATRIX, 0.04, 0.04, 0.1)
-        LIBS.rotateX(this.leftBEye.POSITION_MATRIX, LIBS.degToRad(0))
-        LIBS.translateZ(this.leftBEye.POSITION_MATRIX, 0.16)
-        LIBS.translateX(this.leftBEye.POSITION_MATRIX, -0.08)
-        LIBS.translateY(this.leftBEye.POSITION_MATRIX, -0.05)
-        this.head.childs.push(this.leftBEye);
+        LIBS.translateZ(this.leftEyeB.POSITION_MATRIX, 0.03)
+        LIBS.rotateX(this.leftEyeB.POSITION_MATRIX, LIBS.degToRad(13))
+        LIBS.rotateY(this.leftEyeB.POSITION_MATRIX, LIBS.degToRad(-35))
+        this.head.childs.push(this.leftEyeB)
 
-        this.leftWEye = new Ellipsoid(
+        this.leftEyeW = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            1.4,
-            1.9,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            23,
+            90,
             WHITE
         )
-        LIBS.translateZ(this.leftWEye.POSITION_MATRIX, 0.02)
-        this.leftBEye.childs.push(this.leftWEye);
+        LIBS.translateZ(this.leftEyeW.POSITION_MATRIX, 0.00001)
+        this.leftEyeB.childs.push(this.leftEyeW)
 
-        this.leftBEye2 = new Ellipsoid(
+        this.leftEyeB2 = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            1.2,
-            1.6,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            18,
+            90,
             BLACK
         )
-        LIBS.translateZ(this.leftBEye2.POSITION_MATRIX, 0.04)
-        LIBS.translateY(this.leftBEye2.POSITION_MATRIX, -0.25)
-        LIBS.translateX(this.leftBEye2.POSITION_MATRIX, 0.2)
-        this.leftBEye.childs.push(this.leftBEye2);
+        LIBS.translateZ(this.leftEyeB2.POSITION_MATRIX, 0.0001)
+        LIBS.rotateX(this.leftEyeB2.POSITION_MATRIX, LIBS.degToRad(4))
+        LIBS.rotateY(this.leftEyeB2.POSITION_MATRIX, LIBS.degToRad(4))
+        this.leftEyeB.childs.push(this.leftEyeB2)
 
-        this.leftREye = new Ellipsoid(
+        this.leftEyeR = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            1,
-            1.3,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            16,
+            90,
             RED
         )
-        LIBS.translateZ(this.leftREye.POSITION_MATRIX, 0.07)
-        LIBS.translateY(this.leftREye.POSITION_MATRIX, -0.4)
-        LIBS.translateX(this.leftREye.POSITION_MATRIX, 0.3)
-        this.leftBEye.childs.push(this.leftREye);
+        LIBS.translateZ(this.leftEyeR.POSITION_MATRIX, 0.0002)
+        LIBS.rotateX(this.leftEyeR.POSITION_MATRIX, LIBS.degToRad(4))
+        LIBS.rotateY(this.leftEyeR.POSITION_MATRIX, LIBS.degToRad(4))
+        this.leftEyeB.childs.push(this.leftEyeR)
 
-        this.leftBEye3 = new Ellipsoid(
+        this.leftEyeB3 = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            0.5,
-            1,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            12,
+            90,
             BLACK
         )
-        LIBS.translateZ(this.leftBEye3.POSITION_MATRIX, 0.08)
-        LIBS.translateY(this.leftBEye3.POSITION_MATRIX, -0.5)
-        LIBS.translateX(this.leftBEye3.POSITION_MATRIX, 0.3)
-        this.leftBEye.childs.push(this.leftBEye3);
+        LIBS.scale(this.leftEyeB3.POSITION_MATRIX, 0.3, 0.5, 1)
+        LIBS.translateZ(this.leftEyeB3.POSITION_MATRIX, 0.003)
+        LIBS.rotateX(this.leftEyeB3.POSITION_MATRIX, LIBS.degToRad(5))
+        LIBS.rotateY(this.leftEyeB3.POSITION_MATRIX, LIBS.degToRad(5))
+        this.leftEyeB.childs.push(this.leftEyeB3)
 
         //Right Eye
-        this.rightBEye = new Ellipsoid(
+        this.rightEyeB = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            1.5,
-            2,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            25,
+            90,
             BLACK
         )
-        LIBS.scale(this.rightBEye.POSITION_MATRIX, 0.04, 0.04, 0.1)
-        LIBS.rotateX(this.rightBEye.POSITION_MATRIX, LIBS.degToRad(0))
-        LIBS.translateZ(this.rightBEye.POSITION_MATRIX, 0.16)
-        LIBS.translateX(this.rightBEye.POSITION_MATRIX, 0.08)
-        LIBS.translateY(this.rightBEye.POSITION_MATRIX, -0.05)
-        this.head.childs.push(this.rightBEye);
-        this.rightWEye = new Ellipsoid(
+        LIBS.translateZ(this.rightEyeB.POSITION_MATRIX, 0.03)
+        LIBS.rotateX(this.rightEyeB.POSITION_MATRIX, LIBS.degToRad(13))
+        LIBS.rotateY(this.rightEyeB.POSITION_MATRIX, LIBS.degToRad(35))
+        this.head.childs.push(this.rightEyeB)
+
+        this.rightEyeW = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            1.4,
-            1.9,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            23,
+            90,
             WHITE
         )
-        LIBS.translateZ(this.rightWEye.POSITION_MATRIX, 0.02)
-        this.rightBEye.childs.push(this.rightWEye);
+        LIBS.translateZ(this.rightEyeW.POSITION_MATRIX, 0.00001)
+        this.rightEyeB.childs.push(this.rightEyeW)
 
-        this.rightBEye2 = new Ellipsoid(
+        this.rightEyeB2 = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            1.2,
-            1.6,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            18,
+            90,
             BLACK
         )
-        LIBS.translateZ(this.rightBEye2.POSITION_MATRIX, 0.04)
-        LIBS.translateY(this.rightBEye2.POSITION_MATRIX, -0.25)
-        LIBS.translateX(this.rightBEye2.POSITION_MATRIX, -0.2)
-        this.rightBEye.childs.push(this.rightBEye2);
+        LIBS.translateZ(this.rightEyeB2.POSITION_MATRIX, 0.0001)
+        LIBS.rotateX(this.rightEyeB2.POSITION_MATRIX, LIBS.degToRad(4))
+        LIBS.rotateY(this.rightEyeB2.POSITION_MATRIX, LIBS.degToRad(-4))
+        this.rightEyeB.childs.push(this.rightEyeB2)
 
-        this.rightREye = new Ellipsoid(
+        this.rightEyeR = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            1,
-            1.3,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            16,
+            90,
             RED
         )
-        LIBS.translateZ(this.rightREye.POSITION_MATRIX, 0.07)
-        LIBS.translateY(this.rightREye.POSITION_MATRIX, -0.4)
-        LIBS.translateX(this.rightREye.POSITION_MATRIX, -0.3)
-        this.rightBEye.childs.push(this.rightREye);
+        LIBS.translateZ(this.rightEyeR.POSITION_MATRIX, 0.0002)
+        LIBS.rotateX(this.rightEyeR.POSITION_MATRIX, LIBS.degToRad(4))
+        LIBS.rotateY(this.rightEyeR.POSITION_MATRIX, LIBS.degToRad(-4))
+        this.rightEyeB.childs.push(this.rightEyeR)
 
-        this.rightBEye3 = new Ellipsoid(
+        this.rightEyeB3 = new ModifiedEllipsoid(
             ...GL_PARAMS,
-            0.5,
-            1,
-            0.1,
+            0.18,
+            0.18,
+            0.18,
             30,
             30,
             360,
+            12,
+            90,
             BLACK
         )
-        LIBS.translateZ(this.rightBEye3.POSITION_MATRIX, 0.08)
-        LIBS.translateY(this.rightBEye3.POSITION_MATRIX, -0.5)
-        LIBS.translateX(this.rightBEye3.POSITION_MATRIX, -0.3)
-        this.rightBEye.childs.push(this.rightBEye3);
-
+        LIBS.scale(this.rightEyeB3.POSITION_MATRIX, 0.3, 0.5, 1)
+        LIBS.translateZ(this.rightEyeB3.POSITION_MATRIX, 0.003)
+        LIBS.rotateX(this.rightEyeB3.POSITION_MATRIX, LIBS.degToRad(5))
+        LIBS.rotateY(this.rightEyeB3.POSITION_MATRIX, LIBS.degToRad(-5))
+        this.rightEyeB.childs.push(this.rightEyeB3)
 
         //Kepang
         const braid_radius = 0.35;
