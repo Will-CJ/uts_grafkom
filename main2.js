@@ -4,6 +4,7 @@ import { Kirlia } from "./character/Kirlia.js";
 import { Gardevoir } from "./character/Gardevoir.js";
 import { Gallade } from "./character/Gallade.js";
 import { Ralts } from "./character/Ralts.js"; 
+// Asumsikan LIBS sudah dimuat sebelumnya
 
 function main() {
     /** @type {HTMLCanvasElement} */
@@ -61,7 +62,7 @@ function main() {
         GL.compileShader(shader);
         if (!GL.getShaderParameter(shader, GL.COMPILE_STATUS)) {
             alert("ERROR IN " + typeString + " SHADER: " + GL.getShaderInfoLog(shader));
-            return null;
+            return null; // Mengembalikan null jika kompilasi gagal
         }
         return shader;
     }
@@ -69,6 +70,10 @@ function main() {
     // --- Compile & Link Color Shader Program ---
     var color_shader_vertex = compile_shader(color_shader_vertex_source, GL.VERTEX_SHADER, "COLOR VERTEX");
     var color_shader_fragment = compile_shader(color_shader_fragment_source, GL.FRAGMENT_SHADER, "COLOR FRAGMENT");
+    
+    // PERBAIKAN: Hentikan eksekusi jika ada shader yang gagal dikompilasi
+    if (color_shader_vertex === null || color_shader_fragment === null) return; 
+
     var COLOR_SHADER_PROGRAM = GL.createProgram();
     GL.attachShader(COLOR_SHADER_PROGRAM, color_shader_vertex);
     GL.attachShader(COLOR_SHADER_PROGRAM, color_shader_fragment);
@@ -77,6 +82,10 @@ function main() {
     // --- Compile & Link Skybox Shader Program ---
     var skybox_shader_vertex = compile_shader(skybox_shader_vertex_source, GL.VERTEX_SHADER, "SKYBOX VERTEX");
     var skybox_shader_fragment = compile_shader(skybox_shader_fragment_source, GL.FRAGMENT_SHADER, "SKYBOX FRAGMENT");
+    
+    // PERBAIKAN: Hentikan eksekusi jika ada shader yang gagal dikompilasi
+    if (skybox_shader_vertex === null || skybox_shader_fragment === null) return;
+
     var SKYBOX_SHADER_PROGRAM = GL.createProgram();
     GL.attachShader(SKYBOX_SHADER_PROGRAM, skybox_shader_vertex);
     GL.attachShader(SKYBOX_SHADER_PROGRAM, skybox_shader_fragment);
@@ -139,9 +148,9 @@ function main() {
     /*========================= ENVIRONMENT SETUP - FLOOR ========================= */
     const floorVertices = [
         -100.0, 0.0, -100.0, 
-         100.0, 0.0, -100.0, 
-         100.0, 0.0,  100.0, 
-        -100.0, 0.0,  100.0, 
+        100.0, 0.0, -100.0, 
+        100.0, 0.0,  100.0, 
+        -100.0, 0.0,  100.0, 
     ];
 
     const floorIndices = [
@@ -166,35 +175,35 @@ function main() {
     var cube_vertex = [
         // Format: x,y,z, u,v (5 components per vertex)
         // belakang
-        -1,-1,-1,    1,1/3,
-        1,-1,-1,    3/4,1/3,
-        1, 1,-1,    3/4,2/3,
-        -1, 1,-1,    1,2/3,
+        -1,-1,-1,    1,1/3,
+        1,-1,-1,    3/4,1/3,
+        1, 1,-1,    3/4,2/3,
+        -1, 1,-1,    1,2/3,
         // depan
-        -1,-1, 1,    1/4,1/3,
-        1,-1, 1,    2/4,1/3,
-        1, 1, 1,    2/4,2/3,
-        -1, 1, 1,    1/4,2/3,
+        -1,-1, 1,    1/4,1/3,
+        1,-1, 1,    2/4,1/3,
+        1, 1, 1,    2/4,2/3,
+        -1, 1, 1,    1/4,2/3,
         // kiri
-        -1,-1,-1,    0,1/3,
-        -1, 1,-1,    0,2/3,
-        -1, 1, 1,    1/4,2/3,
-        -1,-1, 1,    1/4,1/3,
+        -1,-1,-1,    0,1/3,
+        -1, 1,-1,    0,2/3,
+        -1, 1, 1,    1/4,2/3,
+        -1,-1, 1,    1/4,1/3,
         // kanan
-        1,-1,-1,    3/4,1/3,
-        1, 1,-1,    3/4,2/3,
-        1, 1, 1,    2/4,2/3,
-        1,-1, 1,    2/4,1/3,
+        1,-1,-1,    3/4,1/3,
+        1, 1,-1,    3/4,2/3,
+        1, 1, 1,    2/4,2/3,
+        1,-1, 1,    2/4,1/3,
         // bawah
-        -1,-1,-1,    1/4,0,
-        -1,-1, 1,    1/4,1/3,
-        1,-1, 1,    2/4,1/3,
-        1,-1,-1,    2/4,0,
+        -1,-1,-1,    1/4,0,
+        -1,-1, 1,    1/4,1/3,
+        1,-1, 1,    2/4,1/3,
+        1,-1,-1,    2/4,0,
         // atas
-        -1, 1,-1,    1/4,1,
-        -1, 1, 1,    1/4,2/3,
-        1, 1, 1,    2/4,2/3,
-        1, 1,-1,    2/4,1
+        -1, 1,-1,    1/4,1,
+        -1, 1, 1,    1/4,2/3,
+        1, 1, 1,    2/4,2/3,
+        1, 1,-1,    2/4,1
     ];
 
     let scale = 100;
@@ -205,9 +214,9 @@ function main() {
     }
 
     var cube_faces = [
-        0, 1, 2,  0, 2, 3,
-        4, 5, 6,  4, 6, 7,
-        8, 9,10,  8,10,11,
+        0, 1, 2,  0, 2, 3,
+        4, 5, 6,  4, 6, 7,
+        8, 9,10,  8,10,11,
         12,13,14, 12,14,15,
         16,17,18, 16,18,19,
         20,21,22, 20,22,23
@@ -251,9 +260,11 @@ function main() {
 
     /*========================= MATRICES & CONTROLS ========================= */
     var PROJMATRIX = LIBS.get_projection(40, CANVAS.width / CANVAS.height, 1, 100);
+    // VIEWMATRIX HANYA menyimpan POSISI awal (Translation)
     var VIEWMATRIX = LIBS.get_I4();
     LIBS.translateZ(VIEWMATRIX, -8); 
 
+    // MOUSE LOOK CONTROLS
     var drag = false;
     var x_prev, y_prev;
     var dX = 0, dY = 0, THETA = 0, PHI = 0;
@@ -278,28 +289,38 @@ function main() {
         e.preventDefault();
     });
 
-    // --- Keyboard listener to trigger the bowing animation ---
+    // KEYBOARD CONTROLS STATE (WASD, Spasi/Ctrl)
+    let keys = {};
+    let isWalking = false; // Flag untuk animasi Gardevoir
+
+    // Pemicu animasi Kirlia (berulang 15 detik)
     setInterval(() => {
         kirlia.runAnimation();
     }, 15000);
 
     // Global state
     let globalTime = 0.0;
-    let isWalking = false; 
     let lastTime = 0;
+    const cameraSpeed = 5.0; // Kecepatan pergerakan (unit per detik)
 
-    // Tangani input untuk mengubah state
+    // PERBAIKAN: Pindahkan semua event listener ke sini (luar animate)
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'w' || event.key === 'W') {
+        const key = event.key.toLowerCase();
+        keys[key] = true;
+
+        if (key === 'p') {
             isWalking = true;
         }
     });
+
     document.addEventListener('keyup', (event) => {
-        if (event.key === 'w' || event.key === 'W') {
+        const key = event.key.toLowerCase();
+        keys[key] = false;
+
+        if (key === 'p') {
             isWalking = false;
         }
     });
-
     /*========================= DRAWING ========================= */
     GL.enable(GL.DEPTH_TEST);
     GL.depthFunc(GL.LEQUAL);
@@ -316,6 +337,7 @@ function main() {
         GL.viewport(0, 0, CANVAS.width, CANVAS.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
+        // MOUSE LOOK ROTATION
         if (!drag) {
             dX *= (1 - FRICTION);
             dY *= (1 - FRICTION);
@@ -323,19 +345,39 @@ function main() {
             PHI += dY;
         }
 
-        var rotation = LIBS.get_I4();
-        LIBS.rotateY(rotation, THETA);
-        LIBS.rotateX(rotation, PHI);
+        // Matriks Rotasi Mouse Look
+        var mouseRotationMatrix = LIBS.get_I4();
+        LIBS.rotateY(mouseRotationMatrix, THETA);
+        LIBS.rotateX(mouseRotationMatrix, PHI);
+
+        // --- WASD & Vertical Movement ---
+        let camTranslation = LIBS.get_I4();
+
+        const dist = cameraSpeed * elapsed;
+        
+        // Translasi pergerakan WASD (relative to camera rotation)
+        if (keys['w']) { LIBS.translateZ(camTranslation, dist); } // Maju
+        if (keys['s']) { LIBS.translateZ(camTranslation, -dist); } // Mundur
+        if (keys['a']) { LIBS.translateX(camTranslation, dist); } // Geser Kiri (A)
+        if (keys['d']) { LIBS.translateX(camTranslation, -dist); } // Geser Kanan (D)
+        if (keys[' ']) { LIBS.translateY(camTranslation, -dist); } // Naik (Space)
+        if (keys['control']) { LIBS.translateY(camTranslation, dist); } // Turun (Ctrl)
+        
+        // Menerapkan pergerakan kamera (CamTranslation) pada VIEWMATRIX (Global Translation)
+        VIEWMATRIX = LIBS.multiply(camTranslation, VIEWMATRIX);
+
+        // Matriks View Final: Rotasi Mouse di kali Posisi Kamera Saat Ini
+        var finalViewMatrix = LIBS.multiply(mouseRotationMatrix, VIEWMATRIX);
 
         /*========================= 1. SKYBOX DRAW (DRAW FIRST) ========================= */
         
         GL.useProgram(SKYBOX_SHADER_PROGRAM); 
         
         GL.uniformMatrix4fv(_sky_Pmatrix, false, PROJMATRIX);
-        GL.uniformMatrix4fv(_sky_Vmatrix, false, VIEWMATRIX);
-        
-        var skyboxRenderMatrix = LIBS.multiply(rotation, skyboxModelMatrix);
-        GL.uniformMatrix4fv(_sky_Mmatrix, false, skyboxRenderMatrix);
+        GL.uniformMatrix4fv(_sky_Vmatrix, false, finalViewMatrix);
+
+        // Skybox Model Matrix TIDAK dirotasi mouse (rotation)
+        GL.uniformMatrix4fv(_sky_Mmatrix, false, skyboxModelMatrix);
 
         // Bind Buffers
         GL.bindBuffer(GL.ARRAY_BUFFER, CUBE_VERTEX);
@@ -355,11 +397,11 @@ function main() {
 
         // Set the projection and view matrices for all objects
         GL.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
-        GL.uniformMatrix4fv(_Vmatrix, false, VIEWMATRIX);
+        GL.uniformMatrix4fv(_Vmatrix, false, finalViewMatrix); 
         
         /*--- FLOOR DRAW ---*/
-        var floorRenderMatrix = LIBS.multiply(rotation, floorModelMatrix);
-        GL.uniformMatrix4fv(_Mmatrix, false, floorRenderMatrix);
+        // TIDAK ada rotasi mouse (rotation)
+        GL.uniformMatrix4fv(_Mmatrix, false, floorModelMatrix);
         GL.uniform3fv(_uColor, [0.4, 0.5, 0.4]); 
 
         GL.bindBuffer(GL.ARRAY_BUFFER, floorVertexBuffer);
@@ -371,20 +413,16 @@ function main() {
         /*--- CHARACTER DRAW ---*/
         
         // Ralts
-        var raltsRenderMatrix = LIBS.multiply(rotation, raltsModelMatrix);
-        ralts.render(raltsRenderMatrix);
+        ralts.render(raltsModelMatrix);
         
         // Kirlia 
-        var kirliaRenderMatrix = LIBS.multiply(rotation, kirliaModelMatrix);
-        kirlia.render(kirliaRenderMatrix, time);
+        kirlia.render(kirliaModelMatrix, time);
 
         // Gardevoir 
-        var gardevoirRenderMatrix = LIBS.multiply(rotation, gardevoirModelMatrix);
-        gardevoir.render(gardevoirRenderMatrix, time, isWalking); 
+        gardevoir.render(gardevoirModelMatrix, time, isWalking); 
 
         // Gallade
-        var galladeRenderMatrix = LIBS.multiply(rotation, galladeModelMatrix);
-        gallade.render(galladeRenderMatrix);
+        gallade.render(galladeModelMatrix);
 
         GL.flush();
         window.requestAnimationFrame(animate);
