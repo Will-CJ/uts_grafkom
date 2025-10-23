@@ -52,11 +52,11 @@ function main() {
         // Sumber Cahaya (Bisa diubah ke uniform jika ingin digerakkan)
         const vec3 source_ambient_color  = vec3(0.2, 0.2, 0.2); // Cahaya Ambient
         const vec3 source_diffuse_color  = vec3(0.8, 0.8, 0.8); // Cahaya Diffuse (Putih)
-        const vec3 source_specular_color = vec3(1.0, 1.0, 1.0);
+        const vec3 source_specular_color = vec3(0.5, 0.5, 0.5);
         const vec3 source_direction      = vec3(10.0, 10.0, 10.0); // Cahaya datang dari atas (Y positif)
 
         // Material (Umum)
-        const float mat_shininess = 10.0;
+        const float mat_shininess = 5.0;
         
         void main(void) {
              vec3 N = normalize(vNormal);
