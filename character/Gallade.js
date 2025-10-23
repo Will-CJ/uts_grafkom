@@ -85,7 +85,7 @@ export class Gallade {
     // Parameter ayunan
     walkPhase = 0;
     walkSpeed = 0.1; 
-    MAX_LEG_ANGLE = LIBS.degToRad(25);
+    MAX_LEG_ANGLE = LIBS.degToRad(10);
     MAX_ARM_ANGLE = LIBS.degToRad(10);
 
     // Parameter Nafas
