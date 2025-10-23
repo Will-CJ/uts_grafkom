@@ -25,15 +25,12 @@ export class Gallade {
     kakiKanan = null; // Cone (celana)
     pipiKanan = null; // Cone
     pipiKiri = null; // Cone
-    bahuKiri = null;
-    bahuKanan = null;
-    kumisKanan = null;
-    kumisKiri = null;
-    kumisKananBawah = null;
-    kumisKiriBawah = null;
-    telingaKiri2 = null;
-    headGreen5 = null;
-
+    bahuKiri = null;
+    bahuKanan = null;
+    kumisKanan = null;
+    kumisKiri = null;
+    kumisKananBawah = null;
+    kumisKiriBawah = null;
 
     // Warna-warna
     COLOR_HIJAU = [0.15, 0.6, 0.4];
@@ -45,48 +42,56 @@ export class Gallade {
     // Simpan objek root untuk setup dan render
     rootObject = null;
 
-    // === Logika Patrol & State (Pindahan dari main.js) ===
-    WALK_SPEED = 1.0;
-    MAX_FORWARD = 0.0;
-    MAX_BACKWARD = 2.0;
-    ROTATION_DURATION = 1.0;
-    DELAY_DURATION = 1.0; // Durasi salto
-    SHOWCASE_DURATION = 3.0; // Total durasi (1.0s jongkok, 1.0s salto, 1.0s pose)
-    CROUCH_DURATION = 1.0;
-    SALTO_DURATION = 1.0;
-    POSE_DURATION = 1.0;
-    
-    // Posisi Dasar (di-set dari main.js)
-    baseX = 0.0;
-    baseY = 0.0;
-    baseZ = 0.0;
+    // === Logika Patrol & State (Pindahan dari main.js) ===
+    WALK_SPEED = 1.0;
+    MAX_FORWARD = 0.0;
+    MAX_BACKWARD = 2.0;
+    ROTATION_DURATION = 1.0;
+    DELAY_DURATION = 1.0; // Durasi salto
+    
+    PRE_ROTATION_DELAY_DURATION = 2.0; // Durasi jeda sebelum rotasi
+    BREATHING_DELAY_DURATION = 2.0; // Durasi jeda antar nafas
 
-    // Variabel State Internal
-    patrolZ_offset = 0.0;     // Offset Z relatif dari baseZ
-    patrolRotY = 0.0;         // Rotasi Y saat ini
-    direction = -1;           // -1 = mundur (+Z), 1 = maju (-Z)
-    state = 'WALKING';
-    delayStartTime = 0;
-    rotationStartTime = 0;
-    startRotY = 0;
-    targetRotY = 0.0;
-    // =======================================
+    // Posisi Dasar (di-set dari main.js)
+    baseX = 0.0;
+    baseY = 0.0;
+    baseZ = 0.0;
 
-    // Variabel penyimpanan pose awal
-    _initial_pinggang = null;
-    _initial_bahuKiri = null;
-    _initial_bahuKanan = null;
-    _initial_lenganKiri = null;
-    _initial_lenganKanan = null;
-    _initial_kakiKiri = null;
-    _initial_kakiKanan = null;
+    // Variabel State Internal
+    patrolZ_offset = 0.0;     // Offset Z relatif dari baseZ
+    patrolRotY = 0.0;         // Rotasi Y saat ini
+    direction = -1;           // -1 = mundur (+Z), 1 = maju (-Z)
+    state = 'WALKING';
+    delayStartTime = 0;
+    rotationStartTime = 0;
+    preRotationDelayStartTime = 0;
+    startRotY = 0;
+    targetRotY = 0.0;
+    // =======================================
 
-    // Parameter ayunan
-    walkPhase = 0;
-    walkSpeed = 0.1; 
-    MAX_LEG_ANGLE = LIBS.degToRad(25);
-    MAX_ARM_ANGLE = LIBS.degToRad(10);
+    // Variabel penyimpanan pose awal
+    _initial_pinggang = null;
+    _initial_bahuKiri = null;
+    _initial_bahuKanan = null;
+    _initial_lenganKiri = null;
+    _initial_lenganKanan = null;
+    _initial_kakiKiri = null;
+    _initial_kakiKanan = null;
+    _initial_badanBiru = null;
+    _initial_badanMerah = null;
+    _initial_kepalaPutih = null;
+    _initial_kepalaHijau = null;
 
+    // Parameter ayunan
+    walkPhase = 0;
+    walkSpeed = 0.1; 
+    MAX_LEG_ANGLE = LIBS.degToRad(25);
+    MAX_ARM_ANGLE = LIBS.degToRad(10);
+
+    // Parameter Nafas
+    BREATH_SPEED = 4.0; // Kecepatan nafas (radian per detik)
+    BREATH_AMPLITUDE = 0.025; // Normalnya 0.05. Dibuat 0.5 agar sangat terlihat.
+    breathingDelayStartTime = 0;
 
     constructor(GL, SHADER_PROGRAM, _position, _MMatrix) {
         this.GL = GL;
@@ -210,11 +215,8 @@ export class Gallade {
         );
         // arahkan ke depan (sumbu Z)
         LIBS.rotateX(this.kumisKanan.POSITION_MATRIX, LIBS.degToRad(300));
-        // sedikit yaw keluar
         LIBS.rotateY(this.kumisKanan.POSITION_MATRIX, -MUSTACHE_YAW + LIBS.degToRad(-1));
-        // sedikit gepeng (lebih tajam & tipis)
         LIBS.scale(this.kumisKanan.POSITION_MATRIX, 0.05, 1.2, 0.25);
-        // posisikan relatif ke kepala putih
         LIBS.translateX(this.kumisKanan.POSITION_MATRIX,  MUSTACHE_X_OFF + 0.035);
         LIBS.translateY(this.kumisKanan.POSITION_MATRIX,  MUSTACHE_Y - 0.02);
         LIBS.translateZ(this.kumisKanan.POSITION_MATRIX,  MUSTACHE_Z + 0.03);
@@ -281,7 +283,7 @@ export class Gallade {
         LIBS.translateZ(this.telingaKiri.POSITION_MATRIX, -0.15);
 
          // Telinga Kiri (Ellipsoid Oval - Mirip Telinga Bundar Asli Anda)
-        this.telingaKiri2 = new Ellipsoid(
+        var telingaKiri2 = new Ellipsoid(
             this.GL, this.SHADER_PROGRAM, this._position, this._MMatrix, 
             0.1, 0.36, 0.15,
             10, 10, 
@@ -289,14 +291,14 @@ export class Gallade {
             this.COLOR_CYAN
         );
 
-        LIBS.scale(this.telingaKiri2.POSITION_MATRIX, 0.5, 0.9, 1.5); 
-        LIBS.translateY(this.telingaKiri2.POSITION_MATRIX, 0.05);
-        LIBS.translateX(this.telingaKiri2.POSITION_MATRIX, 0.0);
-        LIBS.translateZ(this.telingaKiri2.POSITION_MATRIX, 0.025);
-        LIBS.rotateX(this.telingaKiri2.POSITION_MATRIX, Math.PI / 2);
+        LIBS.scale(telingaKiri2.POSITION_MATRIX, 0.5, 0.9, 1.5); 
+        LIBS.translateY(telingaKiri2.POSITION_MATRIX, 0.05);
+        LIBS.translateX(telingaKiri2.POSITION_MATRIX, 0.0);
+        LIBS.translateZ(telingaKiri2.POSITION_MATRIX, 0.025);
+        LIBS.rotateX(telingaKiri2.POSITION_MATRIX, Math.PI / 2);
 
         this.kepalaPutih.childs.push(this.telingaKiri);
-        this.kepalaPutih.childs.push(this.telingaKiri2);
+        this.kepalaPutih.childs.push(telingaKiri2);
 
         const LIGHT_PASTEL_GREEN = this.COLOR_HIJAU;
         const bodyHeight = 0.75; 
@@ -349,17 +351,17 @@ export class Gallade {
         this.kepalaPutih.childs.push(headGreen4); // Tambahkan ke kepalaPutih
         
         const headGreen5Radius = HEAD_RADIUS + 0.001; // Sedikit lebih besar dari kepala putih
-        this.headGreen5 = new Ellipsoid(
+        var headGreen5 = new Ellipsoid(
             GL, SHADER_PROGRAM, _position, _MMatrix,
             headGreen5Radius, headGreen5Radius, headGreen5Radius,
             30, 30, 180, // Dipotong setengah (180 derajat)
             LIGHT_PASTEL_GREEN
         );
         // Geser ke belakang (Z negatif) dan putar agar bagian yang dipotong menghadap depan
-        LIBS.translateY(this.headGreen5.POSITION_MATRIX, 0.0); // Posisi Y kepala
-        LIBS.rotateY(this.headGreen5.POSITION_MATRIX, 359.75); // Putar 180 derajat pada Y
-        LIBS.translateZ(this.headGreen5.POSITION_MATRIX, 0.0005); // Geser maju sedikit setelah rotasi
-        this.kepalaPutih.childs.push(this.headGreen5);
+        LIBS.translateY(headGreen5.POSITION_MATRIX, 0.0); // Posisi Y kepala
+        LIBS.rotateY(headGreen5.POSITION_MATRIX, 359.75); // Putar 180 derajat pada Y
+        LIBS.translateZ(headGreen5.POSITION_MATRIX, 0.0005); // Geser maju sedikit setelah rotasi
+        this.kepalaPutih.childs.push(headGreen5);
         
         // Kepala Hijau Utama/Leher/Penghubung (Tetap)
         const headRadiusGreen = 0.18;
@@ -442,7 +444,7 @@ export class Gallade {
         LIBS.translateX(this.lenganKanan.POSITION_MATRIX, -0.43);
         LIBS.rotateZ(this.lenganKanan.POSITION_MATRIX, LIBS.degToRad(40)); // Angkat dan putar
         LIBS.rotateX(this.lenganKanan.POSITION_MATRIX, LIBS.degToRad(90));
-        LIBS.scale(this.lenganKanan.POSITION_MATRIX, paraboloidScale, paraboloidScale, paraboloidScale);
+    	LIBS.scale(this.lenganKanan.POSITION_MATRIX, paraboloidScale, paraboloidScale, paraboloidScale);
 
         this.badanBiru.childs.push(this.lenganKiri, this.lenganKanan);
         
@@ -466,83 +468,115 @@ export class Gallade {
 
         // Simpan pose awal
         try {
-            this._initial_pinggang  = this.pinggang.POSITION_MATRIX.slice(0); 
-            this._initial_bahuKiri   = this.bahuKiri.POSITION_MATRIX.slice(0);
-            this._initial_bahuKanan  = this.bahuKanan.POSITION_MATRIX.slice(0);
+            this._initial_pinggang = this.pinggang.POSITION_MATRIX.slice(0);
+            this._initial_bahuKiri = this.bahuKiri.POSITION_MATRIX.slice(0);
+            this._initial_bahuKanan = this.bahuKanan.POSITION_MATRIX.slice(0);
             this._initial_lenganKiri = this.lenganKiri.POSITION_MATRIX.slice(0);
-            this._initial_lenganKanan= this.lenganKanan.POSITION_MATRIX.slice(0);
-            this._initial_kakiKiri   = this.kakiKiri.POSITION_MATRIX.slice(0);
-            this._initial_kakiKanan  = this.kakiKanan.POSITION_MATRIX.slice(0);
+            this._initial_lenganKanan = this.lenganKanan.POSITION_MATRIX.slice(0);
+            this._initial_kakiKiri = this.kakiKiri.POSITION_MATRIX.slice(0);
+            this._initial_kakiKanan = this.kakiKanan.POSITION_MATRIX.slice(0);
+            this._initial_badanBiru = this.badanBiru.POSITION_MATRIX.slice(0);
+            this._initial_badanMerah = this.badanMerah.POSITION_MATRIX.slice(0);
+            this._initial_kepalaPutih = this.kepalaPutih.POSITION_MATRIX.slice(0);
+            this._initial_kepalaHijau = this.kepalaHijau.POSITION_MATRIX.slice(0);
         } catch(e) {
-            this._initial_pinggang  = new Float32Array(this.pinggang.POSITION_MATRIX);
-            this._initial_bahuKiri   = new Float32Array(this.bahuKiri.POSITION_MATRIX);
-            this._initial_bahuKanan  = new Float32Array(this.bahuKanan.POSITION_MATRIX);
+            this._initial_pinggang = new Float32Array(this.pinggang.POSITION_MATRIX);
+            this._initial_bahuKiri = new Float32Array(this.bahuKiri.POSITION_MATRIX);
+            this._initial_bahuKanan = new Float32Array(this.bahuKanan.POSITION_MATRIX);
             this._initial_lenganKiri = new Float32Array(this.lenganKiri.POSITION_MATRIX);
-            this._initial_lenganKanan= new Float32Array(this.lenganKanan.POSITION_MATRIX);
-            this._initial_kakiKiri   = new Float32Array(this.kakiKiri.POSITION_MATRIX);
-            this._initial_kakiKanan  = new Float32Array(this.kakiKanan.POSITION_MATRIX);
+            this._initial_lenganKanan = new Float32Array(this.lenganKanan.POSITION_MATRIX);
+            this._initial_kakiKiri = new Float32Array(this.kakiKiri.POSITION_MATRIX);
+            this._initial_kakiKanan = new Float32Array(this.kakiKanan.POSITION_MATRIX);
+            this._initial_badanBiru = new Float32Array(this.badanBiru.POSITION_MATRIX);
+            this._initial_badanMerah = new Float32Array(this.badanMerah.POSITION_MATRIX);
+            this._initial_kepalaPutih = new Float32Array(this.kepalaPutih.POSITION_MATRIX);
+            this._initial_kepalaHijau = new Float32Array(this.kepalaHijau.POSITION_MATRIX);
         }
 
-        // Inisialisasi state patrol
-        this.patrolZ_offset = 0.0;
-        this.patrolRotY = 0.0;
-        this.direction = -1; // Mulai dengan mundur (+Z)
-        this.state = 'WALKING';
+        // Inisialisasi state patrol
+        this.patrolZ_offset = 0.0;
+        this.patrolRotY = 0.0;
+        this.direction = -1; // Mulai dengan mundur (+Z)
+        this.state = 'WALKING';
     }
 
-    /**
-     * Menetapkan posisi dasar (titik tengah patroli) untuk Gallade.
-     */
-    setBasePosition(x, y, z) {
-        this.baseX = x;
-        this.baseY = y;
-        this.baseZ = z;
-        // Z awal patroli adalah 0.0 relatif terhadap baseZ
-        this.patrolZ_offset = 0.0; 
-    }
+    /**
+     * Menetapkan posisi dasar (titik tengah patroli) untuk Gallade.
+     */
+    setBasePosition(x, y, z) {
+        this.baseX = x;
+        this.baseY = y;
+        this.baseZ = z;
+        // Z awal patroli adalah 0.0 relatif terhadap baseZ
+        this.patrolZ_offset = 0.0; 
+    }
 
-    /**
-     * Menghitung dan mengembalikan Model Matrix terakhir Gallade
-     * berdasarkan posisi dasar dan state patrolinya.
-     */
-    getModelMatrix() {
-        const m = LIBS.get_I4();
-        LIBS.translateX(m, this.baseX);
-        LIBS.translateY(m, this.baseY);
-        // Terapkan offset Z dari patroli
-        LIBS.translateZ(m, this.baseZ + this.patrolZ_offset); 
-        // Terapkan rotasi Y dari U-turn
-        LIBS.rotateY(m, this.patrolRotY);
-        return m;
-    }
+    /**
+     * Menghitung dan mengembalikan Model Matrix terakhir Gallade
+     * berdasarkan posisi dasar dan state patrolinya.
+     */
+    getModelMatrix() {
+        const m = LIBS.get_I4();
+        LIBS.translateX(m, this.baseX);
+        LIBS.translateY(m, this.baseY);
+        // Terapkan offset Z dari patroli
+      	 LIBS.translateZ(m, this.baseZ + this.patrolZ_offset); 
+        // Terapkan rotasi Y dari U-turn
+        LIBS.rotateY(m, this.patrolRotY);
+        return m;
+    }
 
-    /**
+    /**
      * Fungsi update utama untuk Gallade.
      * Mengelola state machine (WALKING, DELAYING, ROTATING).
      * Dipanggil setiap frame dari main.js.
      */
     update(elapsed, globalTime) {
+        // Fungsi helper untuk nafas
+        const applyBreathing = (time) => {
+            const breathFactor = 1.0 + (Math.sin(time * this.BREATH_SPEED) * this.BREATH_AMPLITUDE);
+            const inverseFactor = 1.0 / breathFactor;
+            if (this.badanBiru) LIBS.scale(this.badanBiru.POSITION_MATRIX, breathFactor, 1.0, breathFactor);
+            if (this.badanMerah) LIBS.scale(this.badanMerah.POSITION_MATRIX, breathFactor, 1.0, breathFactor);
+            if (this.kepalaPutih) LIBS.scale(this.kepalaPutih.POSITION_MATRIX, inverseFactor, 1.0, inverseFactor);
+            if (this.kepalaHijau) LIBS.scale(this.kepalaHijau.POSITION_MATRIX, inverseFactor, 1.0, inverseFactor);
+            if (this.bahuKiri)    LIBS.scale(this.bahuKiri.POSITION_MATRIX, inverseFactor, 1.0, inverseFactor);
+            if (this.bahuKanan)   LIBS.scale(this.bahuKanan.POSITION_MATRIX, inverseFactor, 1.0, inverseFactor);
+            if (this.lenganKiri)  LIBS.scale(this.lenganKiri.POSITION_MATRIX, inverseFactor, 1.0, inverseFactor);
+            if (this.lenganKanan) LIBS.scale(this.lenganKanan.POSITION_MATRIX, inverseFactor, 1.0, inverseFactor);
+        };
         
-        // 1. STATE: WALKING
+       // 1. STATE: WALKING
         if (this.state === 'WALKING') {
             const dz = this.WALK_SPEED * elapsed * -this.direction;
             this.patrolZ_offset += dz;
             this.resetRootPose(); // Pastikan badan tegak
+            this.resetBodyPose();
             this.updateWalk();    // Goyang lengan/kaki
+            applyBreathing(globalTime); // Tambahkan efek nafas
 
             // Cek Batas Depan (MAX_FORWARD)
             if (this.direction === 1 && this.patrolZ_offset <= this.MAX_FORWARD) {
                 this.patrolZ_offset = this.MAX_FORWARD;
-                this.state = 'DELAYING';
-                this.delayStartTime = globalTime;
+                
+                // LANGSUNG ROTASI (U-TURN) SAAT DI DEPAN
+                this.state = 'ROTATING'; 
+                this.rotationStartTime = globalTime; 
+                this.startRotY = this.patrolRotY;    
+                this.targetRotY = this.startRotY + Math.PI; 
+                
                 this.direction = -1; // Siapkan arah balik
                 this.resetArmLegPose();
             }
+
             // Cek Batas Belakang (MAX_BACKWARD)
             else if (this.direction === -1 && this.patrolZ_offset >= this.MAX_BACKWARD) {
                 this.patrolZ_offset = this.MAX_BACKWARD;
-                this.state = 'DELAYING';
+                
+                // LAKUKAN SALTO SAAT DI BELAKANG
+                this.state = 'DELAYING'; // Ini akan memicu salto
                 this.delayStartTime = globalTime;
+                
                 this.direction = 1; // Siapkan arah balik
                 this.resetArmLegPose();
             }
@@ -550,23 +584,45 @@ export class Gallade {
 
         // 2. STATE: DELAYING (Salto)
         else if (this.state === 'DELAYING') {
+            const timeInDelay = globalTime - this.delayStartTime;
             this.resetArmLegPose(); // Lengan/kaki diam
+            this.resetBodyPose();
             const saltoProgress = Math.min((globalTime - this.delayStartTime) / this.DELAY_DURATION, 1.0);
             this.updateSalto(saltoProgress); // Lakukan salto
+            applyBreathing(globalTime);
 
-            // Cek jika salto/delay selesai
+            // Cek jika salto selesai
             if (globalTime - this.delayStartTime >= this.DELAY_DURATION) {
-                this.state = 'ROTATING';
-                this.rotationStartTime = globalTime;
-                this.startRotY = this.patrolRotY;
-                this.targetRotY = this.startRotY + Math.PI; // Target rotasi 180 derajat
+                this.patrolRotY += Math.PI; 
+                
+                this.state = 'POST_SALTO_DELAY'; // Masuk ke jeda setelah salto
+                this.preRotationDelayStartTime = globalTime; 
+            }
+        }
+
+        // 2.5. STATE: POST_SALTO_DELAY (Jeda 2 detik setelah salto)
+        else if (this.state === 'POST_SALTO_DELAY') {
+            this.resetArmLegPose(); // Pastikan pose berdiri
+            this.resetRootPose();   
+            this.resetBodyPose();
+            applyBreathing(globalTime); // Tetap bernafas
+
+            // Cek jika jeda 2 detik selesai
+            const timeInPostDelay = globalTime - this.preRotationDelayStartTime;
+            if (timeInPostDelay >= this.PRE_ROTATION_DELAY_DURATION) {
+                
+                this.state = 'BREATHING_DELAY'; 
+                this.breathingDelayStartTime = globalTime;
             }
         }
 
         // 3. STATE: ROTATING (U-Turn)
+        // State ini sekarang HANYA akan terpicu ketika mencapai MAX_FORWARD
         else if (this.state === 'ROTATING') {
             this.resetArmLegPose(); // Lengan/kaki diam
-            this.resetRootPose();   // Tegakkan badan setelah salto
+            this.resetRootPose();   // Tegakkan badan
+            this.resetBodyPose();
+            applyBreathing(globalTime);
 
             // Hitung progres rotasi U-turn
             const t = Math.min((globalTime - this.rotationStartTime) / this.ROTATION_DURATION, 1.0);
@@ -575,8 +631,25 @@ export class Gallade {
 
             // Cek jika rotasi selesai
             if (t >= 1.0) {
-                this.state = 'WALKING';
+                this.state = 'BREATHING_DELAY'; // Transisi ke state nafas
+                this.breathingDelayStartTime = globalTime; // Catat waktu mulai
                 this.patrolRotY = this.targetRotY; // Kunci rotasi ke target
+            }
+        }
+
+        // 4. STATE: BREATHING_DELAY (Nafas setelah U-turn atau Salto)
+        else if (this.state === 'BREATHING_DELAY') {
+            this.resetArmLegPose(); // Lengan/kaki diam
+            this.resetRootPose();   // Badan 
+            this.resetBodyPose();
+
+            // Terapkan efek nafas
+            applyBreathing(globalTime);
+
+            // Cek jika durasi nafas selesai
+            const timeInBreathingDelay = globalTime - this.breathingDelayStartTime;
+            if (timeInBreathingDelay >= this.BREATHING_DELAY_DURATION) {
+                this.state = 'WALKING'; // Kembali jalan
             }
         }
     }
@@ -590,16 +663,16 @@ export class Gallade {
     render(PARENT_MATRIX = LIBS.get_I4()) {
         if (this.rootObject) {
             this.rootObject.render(PARENT_MATRIX);
-        }
+      	 }
     }
 
     resetArmLegPose() {
-        const copy = (dst, src) => { for (let i=0;i<src.length;i++) dst[i]=src[i]; };
+        const copy = (dst, src) => { if (src) for (let i=0;i<src.length;i++) dst[i]=src[i]; };
 
         if (this._initial_bahuKiri)   copy(this.bahuKiri.POSITION_MATRIX,   this._initial_bahuKiri);
         if (this._initial_bahuKanan)  copy(this.bahuKanan.POSITION_MATRIX,  this._initial_bahuKanan);
         if (this._initial_lenganKiri) copy(this.lenganKiri.POSITION_MATRIX, this._initial_lenganKiri);
-        if (this._initial_lenganKanan)copy(this.lenganKanan.POSITION_MATRIX,this._initial_lenganKanan);
+      	 if (this._initial_lenganKanan)copy(this.lenganKanan.POSITION_MATRIX,this._initial_lenganKanan);
 
         if (this._initial_kakiKiri) {
             LIBS.set_I4(this.kakiKiri.POSITION_MATRIX);
@@ -608,39 +681,38 @@ export class Gallade {
             }
         }
         if (this._initial_kakiKanan) {
-            LIBS.set_I4(this.kakiKanan.POSITION_MATRIX);
+          	 LIBS.set_I4(this.kakiKanan.POSITION_MATRIX);
             for (let i=0;i<this._initial_kakiKanan.length;i++) {
             this.kakiKanan.POSITION_MATRIX[i] = this._initial_kakiKanan[i];
-            }
-        }
-    }
-
-    /**
-     * Mengembalikan root (pinggang) ke rotasi/posisi awalnya.
-     */
-    resetRootPose() {
-        const copy = (dst, src) => { for (let i=0;i<src.length;i++) dst[i]=src[i]; };
-        if (this._initial_pinggang) {
-            copy(this.pinggang.POSITION_MATRIX, this._initial_pinggang);
+      	 	 }
         }
     }
 
     /**
-     * Mengaplikasikan rotasi salto (forward flip) ke root (pinggang).
-     * @param {number} progress Nilai 0.0 (awal) hingga 1.0 (akhir salto)
-     */
+     * Mengembalikan root (pinggang) ke rotasi/posisi awalnya.
+     */
+    resetRootPose() {
+        const copy = (dst, src) => { for (let i=0;i<src.length;i++) dst[i]=src[i]; };
+        if (this._initial_pinggang) {
+        	 copy(this.pinggang.POSITION_MATRIX, this._initial_pinggang);
+        }
+    }
+
+    resetBodyPose() {
+        const copy = (dst, src) => { if (src) for (let i=0;i<src.length;i++) dst[i]=src[i]; };
+        if (this._initial_badanBiru)  copy(this.badanBiru.POSITION_MATRIX,  this._initial_badanBiru);
+        if (this._initial_badanMerah) copy(this.badanMerah.POSITION_MATRIX, this._initial_badanMerah);
+        if (this._initial_kepalaPutih) copy(this.kepalaPutih.POSITION_MATRIX, this._initial_kepalaPutih);
+        if (this._initial_kepalaHijau) copy(this.kepalaHijau.POSITION_MATRIX, this._initial_kepalaHijau);
+    }
+
     updateSalto(progress) {
         const copy = (dst, src) => { for (let i=0;i<src.length;i++) dst[i]=src[i]; };
         if (!this._initial_pinggang) return;
-
-        // 1. Reset ke pose root awal
-        copy(this.pinggang.POSITION_MATRIX, this._initial_pinggang);
-        
-        // 2. Hitung sudut salto (360 derajat = 2 * PI radian)
+  	     copy(this.pinggang.POSITION_MATRIX, this._initial_pinggang);
         const angle = progress * 2.0 * Math.PI;
-        
-        // 3. Terapkan rotasi X (salto ke depan)
-        LIBS.rotateX(this.pinggang.POSITION_MATRIX, angle);
+        LIBS.rotateX(this.pinggang.POSITION_MATRIX, angle);
+        LIBS.rotateY(this.pinggang.POSITION_MATRIX, angle * 0.5);
     }
 
     updateWalk() {
@@ -649,35 +721,36 @@ export class Gallade {
         this.walkPhase += this.walkSpeed;
         if (this.walkPhase > Math.PI*2) this.walkPhase -= Math.PI*2;
 
-        const legAngle = this.MAX_LEG_ANGLE * Math.sin(this.walkPhase);
-        const armAngle = this.MAX_ARM_ANGLE * Math.sin(this.walkPhase);
+        const legAngle = this.direction * this.MAX_LEG_ANGLE * Math.sin(this.walkPhase);
+        const armAngle = this.direction * this.MAX_ARM_ANGLE * Math.sin(this.walkPhase);
 
         // kaki: ayun berlawanan
         if (this._initial_kakiKiri) {
             copy(this.kakiKiri.POSITION_MATRIX, this._initial_kakiKiri);
             LIBS.rotateX(this.kakiKiri.POSITION_MATRIX,  legAngle);
-        }
+      	 }
         if (this._initial_kakiKanan) {
             copy(this.kakiKanan.POSITION_MATRIX, this._initial_kakiKanan);
             LIBS.rotateX(this.kakiKanan.POSITION_MATRIX, -legAngle);
         }
 
-        // bahu + lengan: ayun berlawanan dgn kaki
-        if (this._initial_bahuKiri) {
+        // Lengan Kiri (Bahu + Paraboloid)
+        if (this._initial_bahuKiri && this._initial_lenganKiri) { 
             copy(this.bahuKiri.POSITION_MATRIX, this._initial_bahuKiri);
-            LIBS.rotateX(this.bahuKiri.POSITION_MATRIX, -armAngle);
-        }
-        if (this._initial_lenganKiri) {
             copy(this.lenganKiri.POSITION_MATRIX, this._initial_lenganKiri);
+            
+            // Ayun berlawanan dengan kaki kiri
+            LIBS.rotateX(this.bahuKiri.POSITION_MATRIX, -armAngle);
             LIBS.rotateX(this.lenganKiri.POSITION_MATRIX, -armAngle);
         }
 
-        if (this._initial_bahuKanan) {
-            copy(this.bahuKanan.POSITION_MATRIX, this._initial_bahuKanan);
-            LIBS.rotateX(this.bahuKanan.POSITION_MATRIX, armAngle);
-        }
-        if (this._initial_lenganKanan) {
+        // Lengan Kanan (Bahu + Paraboloid)
+        if (this._initial_bahuKanan && this._initial_lenganKanan) { 
+          	 copy(this.bahuKanan.POSITION_MATRIX, this._initial_bahuKanan);
             copy(this.lenganKanan.POSITION_MATRIX, this._initial_lenganKanan);
+            
+            // Ayun berlawanan dengan kaki kanan
+            LIBS.rotateX(this.bahuKanan.POSITION_MATRIX, armAngle);
             LIBS.rotateX(this.lenganKanan.POSITION_MATRIX, armAngle);
         }
     }
