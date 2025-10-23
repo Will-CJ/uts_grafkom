@@ -2,18 +2,19 @@
 import { Ellipsoid } from "../object/Ellipsoid.js";
 
 export class Grass {
-    // Tambahkan islandInstance sebagai parameter karena diperlukan untuk posisi Y yang akurat
-    constructor(GL, SHADER_PROGRAM, _position, _Mmatrix, islandInstance) { 
+    // Tambahkan _normal ke parameter constructor
+    constructor(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, islandInstance) { 
         this.GL = GL;
         this.SHADER_PROGRAM = SHADER_PROGRAM;
         this._position = _position;
         this._Mmatrix = _Mmatrix;
-        this.islandInstance = islandInstance; // Diperlukan untuk getHeightAt
-        
+        this._normal = _normal; // BARU: Simpan lokasi normal
+        this.islandInstance = islandInstance; 
+
         const NUM_GRASS_CLUMPS = 100;
         const MAX_ISLAND_RADIUS = 4.8; 
-        const GRASS_Y_MARGIN = 0.01; // Margin kecil di atas permukaan
-        const MAX_PLACEMENT_FACTOR = 0.8; // Batas penempatan: 80% dari MAX_ISLAND_RADIUS
+        const GRASS_Y_MARGIN = 0.01; 
+        const MAX_PLACEMENT_FACTOR = 0.8; 
         
         // Warna Rumput (Gelap)
         const GREEN_A = [0.05, 0.4, 0.05];
@@ -40,11 +41,11 @@ export class Grass {
             const pX = Math.cos(angle) * r;
             const pZ = Math.sin(angle) * r;
             
-            // --- TANYA KETINGGIAN KE PULAU (DIHAPUS JIKA TIDAK ADA islandInstance) ---
-            // Karena kita harus berasumsi islandInstance dikirimkan di main.js
+            // --- TANYA KETINGGIAN KE PULAU ---
+            // Gunakan getHeightAt() dari islandInstance
             const surfaceY = this.islandInstance ? this.islandInstance.getHeightAt(pX, pZ) : 0.01; 
             
-            // Cek apakah rumput berada di area yang valid (untuk kasus getHeightAt)
+            // Cek apakah rumput berada di area yang valid
             if (surfaceY < -10) continue; 
             
             // --- Penentuan Ukuran Ellipsoid (Rumput) ---
@@ -56,7 +57,8 @@ export class Grass {
             const color = i % 2 === 0 ? GREEN_A : GREEN_B;
             
             // --- Buat dan Posisikan Ellipsoid ---
-            const grassEllipsoid = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, 
+            // MODIFIKASI: Kirim this._normal ke constructor Ellipsoid
+            const grassEllipsoid = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, this._normal, // <--- MODIFIKASI INI
                                                  rX, rY, rZ, 10, 10, 360, color);
             
             // Ketinggian Y yang benar

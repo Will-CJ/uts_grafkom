@@ -3,23 +3,27 @@ import { Cylinder } from "../object/Cylinder.js";
 import { Ellipsoid } from "../object/Ellipsoid.js";
 
 export class Tree {
-    constructor(GL, SHADER_PROGRAM, _position, _Mmatrix) {
+    // TAMBAH: _normal ke constructor
+    constructor(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal) {
         this.GL = GL;
         this.SHADER_PROGRAM = SHADER_PROGRAM;
         this._position = _position;
         this._Mmatrix = _Mmatrix;
-
+        this._normal = _normal; // SIMPAN LOKASI NORMAL
+        
         // Warna
         const BROWN = [0.4, 0.2, 0.05];
         const GREEN_DARK = [0.05, 0.45, 0.05];
         const GREEN_LIGHT = [0.15, 0.55, 0.15];
         
         // --- 1. Batang (Trunk) ---
-        // Tinggi Batang Disesuaikan: Dari 3.0 menjadi 2.8 agar mahkota terlihat lebih turun/padat
         const trunkRadius = 0.35;
         const trunkHeight = 2.8; 
-        this.trunk = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, 
+        
+        // MODIFIKASI: Kirim _normal ke constructor Cylinder
+        this.trunk = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, this._normal, // <--- MODIFIKASI INI
                                   trunkRadius, trunkHeight, 30, BROWN);
+        
         // Posisikan Batang agar berdiri di Y=0
         LIBS.translateY(this.trunk.POSITION_MATRIX, trunkHeight / 2);
 
@@ -27,15 +31,14 @@ export class Tree {
         
         const NUM_ELLIPSOIDS = 50;
         
-        // CROWN_BASE_Y Diturunkan: Mulai dari Y=1.8 (sebelumnya Y=2.0 dengan batang 3.0)
         const CROWN_BASE_Y = trunkHeight - 1.0; 
-        const MAX_CROWN_HEIGHT = 4.0;            // Tinggi Mahkota sedikit dikurangi
-        const MAX_CROWN_RADIUS = 3.5;            
+        const MAX_CROWN_HEIGHT = 4.0;
+        const MAX_CROWN_RADIUS = 3.5;
         
         this.crownObjects = [];
         let currentParent = this.trunk; 
         
-        // Menggunakan loop terstruktur untuk menggantikan hardcode 50 titik
+        // Menggunakan loop terstruktur untuk menghasilkan 50 ellipsoid
         for (let i = 0; i < NUM_ELLIPSOIDS; i++) {
             
             // --- Penentuan Lapisan Vertikal (Y) ---
@@ -46,14 +49,12 @@ export class Tree {
             const angle = i * 137.5 * (Math.PI / 180); 
             const max_r_at_y = MAX_CROWN_RADIUS * (1 - Math.pow(y_progress, 2.5)); 
             
-            // Kerapatan Horizontal Ditingkatkan: Kurangi variasi radial (0.4 menjadi 0.3)
             const radius = max_r_at_y * (0.3 + (i % 5) * 0.1); 
             
             const pX = Math.cos(angle) * radius;
             const pZ = Math.sin(angle) * radius;
             
             // --- Penentuan Ukuran Ellipsoid ---
-            // Kerapatan Ditingkatkan: BASE_SIZE minimum dari 0.3 menjadi 0.5 untuk tumpang tindih lebih banyak
             const base_size = (1 - y_progress) * 0.9 + 0.5; 
             
             const rX = base_size * (0.8 + (i % 3) * 0.1); 
@@ -65,7 +66,8 @@ export class Tree {
             const color = colorIndex === 0 ? GREEN_DARK : GREEN_LIGHT;
             
             // --- Buat dan Posisikan Ellipsoid ---
-            const leafEllipsoid = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, 
+            // MODIFIKASI: Kirim _normal ke constructor Ellipsoid
+            const leafEllipsoid = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, this._normal, // <--- MODIFIKASI INI
                                                 rX, rY, rZ, 30, 30, 360, color);
             
             LIBS.translateX(leafEllipsoid.POSITION_MATRIX, pX);
@@ -81,6 +83,7 @@ export class Tree {
     }
 
     setup() {
+        // Setup root akan otomatis men-setup semua children
         this.root.setup(); 
     }
     
