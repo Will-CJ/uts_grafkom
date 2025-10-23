@@ -548,7 +548,7 @@ function main() {
 
         /*--- CHARACTER DRAW ---*/
         
-        ralts.render(raltsModelMatrix);
+        ralts.render(raltsModelMatrix, time);
         kirlia.render(kirliaModelMatrix, time);
 
         // Gardevoir 
