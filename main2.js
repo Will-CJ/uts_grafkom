@@ -4,7 +4,6 @@ import { Kirlia } from "./character/Kirlia.js";
 import { Gardevoir } from "./character/Gardevoir.js";
 import { Gallade } from "./character/Gallade.js";
 import { Ralts } from "./character/Ralts.js"; 
-// Asumsikan LIBS sudah dimuat sebelumnya
 
 function main() {
     /** @type {HTMLCanvasElement} */
@@ -134,7 +133,11 @@ function main() {
     const gardevoir = new Gardevoir(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix); 
     const gardevoirModelMatrix = LIBS.get_I4();
     LIBS.translateX(gardevoirModelMatrix, 1.0); 
-    LIBS.translateY(gardevoirModelMatrix, 0.3 + GRASS_OFFSET); 
+    LIBS.translateY(gardevoirModelMatrix, -1.0); 
+    gardevoir.setGlobalRotation(
+        [1, 1, 0],       // Sumbu rotasi (miring)
+        [0, 3, 4]        // Pusat rotasi
+    );
     gardevoir.setup();
 
     const gallade = new Gallade(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
@@ -547,7 +550,12 @@ function main() {
         
         ralts.render(raltsModelMatrix);
         kirlia.render(kirliaModelMatrix, time);
-        gardevoir.render(gardevoirModelMatrix, time, isWalking); 
+
+        // Gardevoir 
+        gardevoir.render(gardevoirModelMatrix, time); 
+        gardevoir.updateGlobalMovement(elapsed, gardevoirModelMatrix);
+
+        // Gallade
         gallade.render(galladeModelMatrix);
 
         GL.flush();

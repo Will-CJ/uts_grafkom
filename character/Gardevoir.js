@@ -30,9 +30,56 @@ export class Gardevoir {
         const GREEN = [0.7, 0.94, 0.7];
         const RED = [1.0, 0.667, 0.686];
         const BLACK = [0, 0, 0];
-        // Tambahkan variabel state untuk transisi
+        
+        // --- State Gerakan Global ---
         this.transitionFactor = 0.0;
-        this.lastTime = 0; // Digunakan untuk menghitung delta time
+        this.lastTime = 0;
+        this.globalTimeAcc = 0;
+        this.isIdle = true; 
+        this.idleStartTime = 0; 
+        this.idleDuration = 5.0; 
+        this.moveRadius = 5.0; 
+        this.moveSpeed = LIBS.degToRad(30);
+
+        // --- State Waypoint ---
+        this.idlePoints = [
+            LIBS.degToRad(90),
+            LIBS.degToRad(270)
+        ];
+        this.currentWaypointIndex = 0; 
+        this.currentGlobalAngle = this.idlePoints[this.currentWaypointIndex]; 
+        let nextIndex = (this.currentWaypointIndex + 1) % this.idlePoints.length;
+        this.targetGlobalAngle = this.idlePoints[nextIndex];
+        
+        // --- State Orbit Miring ---
+        this.moveAxis = [0, 1, 0];
+        this.moveCenter = [0, -1.0, 0]; 
+        this.tempMatrix = LIBS.get_I4();
+        this.setGlobalRotation(this.moveAxis, this.moveCenter);
+        
+        // --- [MODIFIKASI] State Animasi Idle ---
+        this.idleAnimActive = false;
+        this.idleAnimScale = 0.0;
+        
+        // [BARU] Definisikan posisi spawn orb
+        this.idleAnimStartPos = [0.0, 0.4, 0.2]; // Posisi spawn (relatif ke body)
+        this.idleAnimPos = [0, 2.7, 0]; // Selalu mulai dari sini
+
+        this.idleAnimDuration = 0.3; // Durasi scaling (0.3 detik)
+        this.idleAnimMoveSpeed = 7; 
+        this.idleAnimGradient = VEC.normalize([0.3, -0.5, 1.0]);
+
+        // [BARU] Variabel untuk 3 Fase Animasi
+        // 0 = Tidak aktif
+        // 1 = Tangan Berputar
+        // 2 = Orb Scaling
+        // 3 = Orb Bergerak
+        this.idleAnimPhase = 0;
+        this.idleArmRotFactor = 0.0; // Progres rotasi tangan (0.0 - 1.0)
+        this.idleArmRotDuration = 0.5; // Durasi rotasi tangan (0.3 detik)
+        
+        // [BARU] Simpan tinggi lengan
+        this.armTopHeight = 0.5; // (Diambil dari const ArmLeftTopHeight)
         
         // --- Store parameters as instance properties without redeclaring ---
         this.GL = GL;
@@ -86,11 +133,11 @@ export class Gardevoir {
             ...GL_PARAMS,
             0.15,   // majorRadius (7)
             -0.17,// minorRadius (8)
-            90,    // startAngDeg (9)
-            270,      // endAngDeg (10)
-            32,             // majorSegments (11)
-            32,             // minorSegments (12)
-            GREEN           // color (13)
+            90,     // startAngDeg (9)
+            270,    // endAngDeg (10)
+            32,         // majorSegments (11)
+            32,         // minorSegments (12)
+            GREEN       // color (13)
         );
         LIBS.translateZ(this.horn.POSITION_MATRIX, 0.06)
         LIBS.translateY(this.horn.POSITION_MATRIX, -0.12)
@@ -389,7 +436,7 @@ export class Gardevoir {
             braid_end,      // endAngDeg (10)
             32,             // majorSegments (11)
             32,             // minorSegments (12)
-            [0.7, 0.94, 0.8]             // color (13)
+            [0.7, 0.94, 0.8]            // color (13)
         );
 
         LIBS.translateY(this.braid1.POSITION_MATRIX, -0.04);
@@ -408,7 +455,7 @@ export class Gardevoir {
             braid_end,      // endAngDeg (10)
             32,             // majorSegments (11)
             32,             // minorSegments (12)
-            [0.7, 0.94, 0.8]             // color (13)
+            [0.7, 0.94, 0.8]            // color (13)
         );
 
         LIBS.translateY(this.braid2.POSITION_MATRIX, -0.04);
@@ -493,7 +540,7 @@ export class Gardevoir {
         LIBS.translateY(this.legLeftTop.POSITION_MATRIX, -0.3);
         LIBS.translateX(this.legLeftTop.POSITION_MATRIX, -0.06);
         this.body.childs.push(this.legLeftTop);
-       
+        
         const legLeftBottomRadius = 0.15;
         this.legLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legLeftBottomRadius-0.075, legLeftBottomRadius+0.1, legLeftBottomRadius-0.075, 30, 30, 360, GREEN);
         LIBS.translateY(this.legLeftBottom.POSITION_MATRIX, -0.55);
@@ -506,11 +553,20 @@ export class Gardevoir {
         LIBS.translateY(this.legRightTop.POSITION_MATRIX, -0.3);
         LIBS.translateX(this.legRightTop.POSITION_MATRIX, 0.06);
         this.body.childs.push(this.legRightTop);
-       
+        
         const legRightBottomRadius = 0.15;
         this.legRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legRightBottomRadius-0.075, legRightBottomRadius+0.1, legRightBottomRadius-0.075, 30, 30, 360, GREEN);
         LIBS.translateY(this.legRightBottom.POSITION_MATRIX, -0.55)
         this.legRightTop.childs.push(this.legRightBottom)
+
+        this.spellOrb = new Ellipsoid(
+            ...GL_PARAMS,
+            0.15, 0.15, 0.15, // radius x, y, z
+            20, 20, 360,     // segments
+            [0.9, 0.4, 0.8]  // Warna (misal: Pink/Ungu)
+        );
+        LIBS.scale(this.spellOrb.POSITION_MATRIX, 0, 0, 0); 
+        this.body.childs.push(this.spellOrb);
 
         // Simpan objek utama (root)
         this.allObjects = [this.body];
@@ -523,7 +579,8 @@ export class Gardevoir {
     }
 
     applyWalkingAnimation(time, factor) {
-        // Kecepatan animasi, sesuaikan nilai 4.0
+        // ... (Tidak ada perubahan di fungsi ini) ...
+        // Kecepatan animasi
         const speed = 0.01;
         // Nilai rotasi leg (max +/- 20 derajat)
         const legMaxRot = 20 * factor;
@@ -539,7 +596,7 @@ export class Gardevoir {
         const armAmplitude = (armMaxRot - armMinRot) / 2;
         // Nilai tengah (offset) yang akan membuat ayunan berpusat di (30 + 45) / 2 = 37.5
         const armOffset = armMinRot + armAmplitude; // 37.5 derajat
-        const sinValue = Math.sin(time * speed);   
+        const sinValue = Math.sin(time * speed);    
         // Rotasi dinamis penuh: (sin * ampl) + offset
         const fullDynamicRotation = (sinValue * armAmplitude) + armOffset;
 
@@ -605,6 +662,7 @@ export class Gardevoir {
      * Mengatur ulang semua matriks ke posisi statis (seperti di constructor).
      */
     resetWalkingAnimation(factor) {
+        // ... (Tidak ada perubahan di fungsi ini) ...
         const armTopHeight = 0.5;
         const dynamicRotation = 0 + (45 - 0) * factor;
         
@@ -664,33 +722,306 @@ export class Gardevoir {
     }
 
     /**
+     * Mengatur bidang dan pusat rotasi global.
+     */
+    setGlobalRotation(axis, center) {
+        this.moveCenter = center || [0, 0, 0];
+        
+        // 1. Normalisasi dan simpan sumbu rotasi
+        this.moveAxis = VEC.normalize(axis);
+        
+        // 2. Cari vektor 'helper' yang tidak paralel dengan sumbu
+        let helper = [1.0, 0.0, 0.0];
+        const dot = VEC.dot(this.moveAxis, helper);
+        if (Math.abs(dot) > 0.99) {
+            helper = [0.0, 1.0, 0.0]; // Ganti jika paralel
+        }
+
+        // 3. Buat dua vektor ortogonal (basis) untuk bidang rotasi
+        //    Gunakan cross product untuk menemukan dua vektor
+        //    yang tegak lurus dengan sumbu.
+        
+        // v1 = 'right' (atau 'forward' awal)
+        const v1 = VEC.normalize(VEC.cross(helper, this.moveAxis));
+        // v2 = 'up' (atau 'right' awal)
+        const v2 = VEC.normalize(VEC.cross(this.moveAxis, v1));
+        
+        this.radiusVec1 = VEC.scale(v1, this.moveRadius);
+        this.radiusVec2 = VEC.scale(v2, this.moveRadius);
+    }
+
+    /**
+     * Mengupdate status state, rotasi global, dan translasi karakter.
+     * @param {number} dt - Delta time (waktu yang berlalu dalam detik).
+     * @param {array} modelMatrix - Matriks Model global Gardevoir yang akan dimodifikasi.
+     */
+    updateGlobalMovement(dt, modelMatrix) {
+        // --- 1. Update State (LOGIKA BARU BERBASIS SUDUT) ---
+        this.globalTimeAcc += dt; 
+
+        if (this.isIdle) {
+            // ... (kode transisi faktor) ...
+            this.transitionFactor -= dt * 5.0; 
+            if (this.transitionFactor < 0.0) this.transitionFactor = 0.0;
+            
+            // Cek di mana kita idle
+            if (this.idleAnimActive) {
+                // --- IDLE DENGAN ANIMASI SPELL (DI 270) ---
+                this.updateIdleAnimation(dt); // Jalankan animasi
+    
+                // Cek jika animasi SUDAH SELESAI
+                if (!this.idleAnimActive) {
+                    // Animasi baru saja selesai, kita boleh bergerak
+                    this.isIdle = false;
+                    
+                    // Tentukan target BERIKUTNYA (ke 90)
+                    this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.idlePoints.length;
+                    let nextTargetAngle = this.idlePoints[this.currentWaypointIndex];
+                    
+                    if (nextTargetAngle <= this.currentGlobalAngle) {
+                        this.targetGlobalAngle = nextTargetAngle + LIBS.degToRad(360) * Math.ceil((this.currentGlobalAngle - nextTargetAngle) / LIBS.degToRad(360));
+                    } else {
+                        this.targetGlobalAngle = nextTargetAngle;
+                    }
+                }
+            } else {
+                // --- IDLE BIASA (DI 90) ---
+                // Cek jika durasi idle selesai
+                if (this.globalTimeAcc - this.idleStartTime >= this.idleDuration) {
+                    this.isIdle = false; // Mulai bergerak
+                    
+                    // Tentukan target BERIKUTNYA (ke 270)
+                    this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.idlePoints.length;
+                    let nextTargetAngle = this.idlePoints[this.currentWaypointIndex];
+                    
+                    if (nextTargetAngle <= this.currentGlobalAngle) {
+                        this.targetGlobalAngle = nextTargetAngle + LIBS.degToRad(360) * Math.ceil((this.currentGlobalAngle - nextTargetAngle) / LIBS.degToRad(360));
+                    } else {
+                        this.targetGlobalAngle = nextTargetAngle;
+                    }
+                }
+            }
+        } else { 
+            // --- LOGIKA BERGERAK ---
+            // ... (kode transisi faktor) ...
+            this.transitionFactor += dt * 5.0; 
+            if (this.transitionFactor > 1.0) this.transitionFactor = 1.0;
+    
+            this.currentGlobalAngle += this.moveSpeed * dt;
+    
+            // Cek jika kita sudah mencapai atau melewati target
+            if (this.currentGlobalAngle >= this.targetGlobalAngle) {
+                this.currentGlobalAngle = this.targetGlobalAngle; 
+                this.isIdle = true; 
+                this.idleStartTime = this.globalTimeAcc; 
+                
+                const angle270 = LIBS.degToRad(270);
+                const epsilon = 0.001; 
+                const wrappedAngle = this.currentGlobalAngle % LIBS.degToRad(360);
+    
+                // [MODIFIKASI TRIGGER]
+                if (Math.abs(wrappedAngle - angle270) < epsilon) {
+                    if (!this.idleAnimActive) {
+                        this.idleAnimActive = true;
+                        
+                        // [BARU] Mulai dari Fase 1
+                        this.idleAnimPhase = 1; 
+                        
+                        // Reset semua state
+                        this.idleArmRotFactor = 0.0; // Reset progres rotasi tangan
+                        this.idleAnimScale = 0.0; 
+                        this.idleAnimPos = [0, 2.7, 0]; // Reset posisi
+                    }
+                }
+            }
+        }
+        
+        // --- 2. Hitung Posisi ---
+        // Gunakan modulo (%) untuk wrapping jika angle > 360
+        const wrappedAngle = this.currentGlobalAngle % LIBS.degToRad(360);
+        
+        const c = Math.cos(wrappedAngle);
+        const s = Math.sin(wrappedAngle);
+        const C = this.moveCenter;
+        
+        const v1 = this.radiusVec1;
+        const v2 = this.radiusVec2;
+        
+        const pos = [
+            C[0] + (v1[0] * c) + (v2[0] * s),
+            C[1] + (v1[1] * c) + (v2[1] * s),
+            C[2] + (v1[2] * c) + (v2[2] * s)
+        ];
+    
+        // --- 3. Hitung Orientasi ---
+        let R, U, F; 
+        const c_wrap = Math.cos(wrappedAngle);
+        const s_wrap = Math.sin(wrappedAngle);
+
+        const v1_xz = [v1[0], 0, v1[2]];
+        const v2_xz = [v2[0], 0, v2[2]];
+        
+        const tangent_x = (-v1_xz[0] * s_wrap) + (v2_xz[0] * c_wrap);
+        const tangent_z = (-v1_xz[2] * s_wrap) + (v2_xz[2] * c_wrap);
+        
+        const facingAngleY = Math.atan2(tangent_x, tangent_z);
+        
+        const s_face = Math.sin(facingAngleY);
+        const c_face = Math.cos(facingAngleY);
+    
+        U = [0, 1, 0];
+        F = [s_face, 0, c_face];
+        R = [c_face, 0, -s_face];
+    
+        // --- 4. Tulis Basis ke Model Matrix ---
+        modelMatrix[0] = R[0]; modelMatrix[1] = R[1]; modelMatrix[2] = R[2]; modelMatrix[3] = 0.0;
+        modelMatrix[4] = U[0]; modelMatrix[5] = U[1]; modelMatrix[6] = U[2]; modelMatrix[7] = 0.0;
+        modelMatrix[8] = F[0]; modelMatrix[9] = F[1]; modelMatrix[10] = F[2]; modelMatrix[11] = 0.0;
+        modelMatrix[12] = pos[0]; modelMatrix[13] = pos[1]; modelMatrix[14] = pos[2]; modelMatrix[15] = 1.0;
+    }
+
+    updateIdleAnimation(dt) {
+        const M_orb = this.spellOrb.POSITION_MATRIX;
+        const armTopHeight = this.armTopHeight; 
+
+        // --- Logika State Machine ---
+        if (!this.idleAnimActive) {
+            LIBS.set_I4(M_orb);
+            LIBS.scale(M_orb, 0, 0, 0);
+            // Biarkan render() yang mengurus reset tangan
+            return;
+        }
+
+        let currentScale = this.idleAnimScale;
+        let currentArmRot = 0; // Sudut target untuk frame ini (0 -> 180)
+
+        // --- FASE 1: Tangan Berputar ---
+        if (this.idleAnimPhase === 1) {
+            this.idleArmRotFactor += (dt / this.idleArmRotDuration);
+            if (this.idleArmRotFactor >= 1.0) {
+                this.idleArmRotFactor = 1.0;
+                this.idleAnimPhase = 2; 
+            }
+            currentArmRot = this.idleArmRotFactor * 90.0;
+            // Sembunyikan orb
+            LIBS.set_I4(M_orb);
+            LIBS.scale(M_orb, 0, 0, 0);
+        } 
+        // --- FASE 2: Scaling Orb ---
+        else if (this.idleAnimPhase === 2) {
+            currentArmRot = 90.0; // Tahan di 180
+            this.idleAnimScale += (dt / this.idleAnimDuration);
+            if (this.idleAnimScale > 10.0) { 
+                this.idleAnimScale = 10.0;
+                this.idleAnimPhase = 3; 
+            }
+            currentScale = this.idleAnimScale;
+            // Tulis matriks orb (di start pos)
+            LIBS.set_I4(M_orb);
+            M_orb[0] = currentScale; M_orb[5] = currentScale; M_orb[10] = currentScale;
+            M_orb[12] = this.idleAnimPos[0]; M_orb[13] = this.idleAnimPos[1]; M_orb[14] = this.idleAnimPos[2];
+        } 
+        // --- FASE 3: Moving Orb ---
+        else if (this.idleAnimPhase === 3) {
+            currentArmRot = 90.0; // Tahan di 180
+            currentScale = 10.0; 
+            const dir = this.idleAnimGradient;
+            const speed = this.idleAnimMoveSpeed;
+            this.idleAnimPos[0] += dir[0] * speed * dt;
+            this.idleAnimPos[1] += dir[1] * speed * dt;
+            this.idleAnimPos[2] += dir[2] * speed * dt;
+            // Tulis matriks orb (di pos baru)
+            LIBS.set_I4(M_orb);
+            M_orb[0] = currentScale; M_orb[5] = currentScale; M_orb[10] = currentScale;
+            M_orb[12] = this.idleAnimPos[0]; M_orb[13] = this.idleAnimPos[1]; M_orb[14] = this.idleAnimPos[2];
+            
+            // Cek selesai
+            if (this.idleAnimPos[1] <= -1.0) {
+                this.idleAnimPhase = 4;
+                this.idleArmRotFactor = 1.0; // Mulai turun dari 1.0 (90 deg)
+                this.idleAnimScale = 0.0; 
+                
+                LIBS.set_I4(M_orb); // Sembunyikan orb
+                LIBS.scale(M_orb, 0, 0, 0);
+                return; 
+            }
+        }else if (this.idleAnimPhase === 4) {
+            // Turunkan faktor dari 1.0 ke 0.0
+            this.idleArmRotFactor -= (dt / this.idleArmRotDuration); 
+            
+            if (this.idleArmRotFactor <= 0.0) {
+                this.idleArmRotFactor = 0.0;
+                this.idleAnimActive = false; // Izinkan Gardevoir bergerak lagi
+                this.idleAnimPhase = 0;
+                currentArmRot = 0.0; // Pastikan tangan kembali ke 0
+            } else {
+                 // Interpolasi rotasi dari 90 (faktor=1) ke 0 (faktor=0)
+                currentArmRot = this.idleArmRotFactor * 90.0;
+            }
+
+            // Orb tetap tersembunyi
+            LIBS.set_I4(M_orb);
+            LIBS.scale(M_orb, 0, 0, 0);
+        }
+
+        // --- Tulis Matriks Tangan (Pivot Rotation yang Benar) ---
+        
+        // --- Tangan Kiri ---
+        let l_pivot_rot = LIBS.get_I4(); // Hasil T_inv * R * T
+        let l_temp_Tinv = LIBS.get_I4(); // Matriks T_inv
+        let l_temp_R = LIBS.get_I4();    // Matriks R
+        let l_temp_T = LIBS.get_I4();    // Matriks T
+        
+        // 1. Buat matriks komponen
+        LIBS.set_I4(l_temp_Tinv); // Pastikan mulai dari identitas
+        LIBS.translateY(l_temp_Tinv, -armTopHeight / 2);      // T_inv
+        LIBS.set_I4(l_temp_R);    // Pastikan mulai dari identitas
+        LIBS.rotateZ(l_temp_R, LIBS.degToRad(-currentArmRot)); // R
+        LIBS.set_I4(l_temp_T);    // Pastikan mulai dari identitas
+        LIBS.translateY(l_temp_T, armTopHeight / 2);       // T
+        
+        // 2. Hitung T_inv * R * T
+        l_pivot_rot = LIBS.multiply(l_temp_Tinv, l_temp_R); // T_inv * R
+        l_pivot_rot = LIBS.multiply(l_pivot_rot, l_temp_T); // (T_inv * R) * T
+        
+        // 3. Salin hasilnya ke matriks tangan kiri (mengganti total)
+        for (let i = 0; i < 16; i++) {
+            this.ArmLeftTop.MOVE_MATRIX[i] = l_pivot_rot[i];
+        }
+
+        // --- Tangan Kanan ---
+        let r_pivot_rot = LIBS.get_I4(); // Hasil T_inv * R * T
+        let r_temp_Tinv = LIBS.get_I4(); // Matriks T_inv
+        let r_temp_R = LIBS.get_I4();    // Matriks R
+        let r_temp_T = LIBS.get_I4();    // Matriks T
+
+        // 1. Buat matriks komponen (gunakan pivot tangan kanan)
+        LIBS.set_I4(r_temp_Tinv);
+        LIBS.translateY(r_temp_Tinv, armTopHeight / 2);      // T_inv (kanan)
+        LIBS.set_I4(r_temp_R);
+        LIBS.rotateZ(r_temp_R, LIBS.degToRad(currentArmRot)); // R (kanan)
+        LIBS.set_I4(r_temp_T);
+        LIBS.translateY(r_temp_T, -armTopHeight / 2);      // T (kanan)
+
+        // 2. Hitung T_inv * R * T
+        r_pivot_rot = LIBS.multiply(r_temp_Tinv, r_temp_R); // T_inv * R
+        r_pivot_rot = LIBS.multiply(r_pivot_rot, r_temp_T); // (T_inv * R) * T
+
+        // 3. Salin hasilnya ke matriks tangan kanan (mengganti total)
+        for (let i = 0; i < 16; i++) {
+            this.ArmRightTop.MOVE_MATRIX[i] = r_pivot_rot[i];
+        }
+    }
+
+    /**
      * Metode untuk merender semua objek. Ini yang dipanggil dari main.js.
      * @param {array} parentMatrix - Matriks global yang masuk (rotasi mouse * posisi global).
      */
-    render(parentMatrix, currentTime, isWalking) {
-        // Menghitung delta time (waktu yang berlalu sejak frame terakhir)
-        const dt = (currentTime - this.lastTime) / 1000;
-        this.lastTime = currentTime;
-        
-        // Kecepatan transisi (Sesuaikan nilai ini, 5.0 berarti transisi ~0.2 detik)
-        const transitionSpeed = 5.0; 
-
-        if (isWalking) {
-            // Transisi ke 1.0 (Animasi ON)
-            this.transitionFactor += dt * transitionSpeed;
-            if (this.transitionFactor > 1.0) this.transitionFactor = 1.0;
-
-            // Panggil fungsi animasi dengan faktor transisi
-            this.applyWalkingAnimation(currentTime, this.transitionFactor); 
-        } else {
-            // Transisi ke 0.0 (Animasi OFF/Reset)
-            this.transitionFactor -= dt * transitionSpeed;
-            if (this.transitionFactor < 0.0) this.transitionFactor = 0.0;
-
-            // Panggil fungsi reset dengan faktor transisi
-            this.resetWalkingAnimation(this.transitionFactor); 
+    render(parentMatrix, currentTime) {
+        if (!this.idleAnimActive) {
+            this.applyWalkingAnimation(currentTime, this.transitionFactor);
         }
-
+        
         // Render objek root dan seluruh hierarkinya
         this.allObjects.forEach(obj => obj.render(parentMatrix));
     }
