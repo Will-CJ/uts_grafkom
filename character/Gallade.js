@@ -50,12 +50,11 @@ export class Gallade {
     MAX_FORWARD = 0.0;
     MAX_BACKWARD = 2.0;
     ROTATION_DURATION = 1.0;
+    DELAY_DURATION = 1.0; // Durasi salto
     SHOWCASE_DURATION = 3.0; // Total durasi (1.0s jongkok, 1.0s salto, 1.0s pose)
     CROUCH_DURATION = 1.0;
     SALTO_DURATION = 1.0;
     POSE_DURATION = 1.0;
-    CROUCH_DEPTH = 0.3; // Seberapa rendah dia jongkok
-    TUCK_ANGLE = LIBS.degToRad(90);
     
     // Posisi Dasar (di-set dari main.js)
     baseX = 0.0;
