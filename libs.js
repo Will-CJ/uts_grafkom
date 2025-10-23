@@ -121,14 +121,34 @@ var LIBS = {
     scale: function (m, x, y, z) {
         m[0] *= x; m[5] *= y; m[10] *= z;
     },
+    
+    // ========================================================
+    // --- FUNGSI BARU: NORMALISASI VEKTOR (VECTOR NORMALIZATION) ---
+    // ========================================================
+    /**
+     * Menormalisasi vektor 3D.
+     * @param {Array<number>} v - Vektor [x, y, z] yang akan dinormalisasi.
+     * @returns {Array<number>} Vektor [x, y, z] yang dinormalisasi.
+     */
+    normalize: function (v) {
+        var length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+        
+        // Cek jika panjangnya mendekati nol untuk menghindari pembagian dengan nol
+        if (length > 0.00001) {
+            return [v[0] / length, v[1] / length, v[2] / length];
+        }
+        // Kembalikan vektor nol jika panjangnya nol
+        return [0, 0, 0]; 
+    },
+    
+    // ========================================================
+    // (Sisa fungsi rotateArbitraryAxis tidak berubah, tapi sekarang menggunakan this.normalize)
+    // ========================================================
 
     /**
      * Menerapkan Rotasi di sekitar Sumbu Sembarang V=(x, y, z) pada Matriks M.
-     * @param {Array<number>} M - Matriks 4x4 untuk diterapkan (Matriks Tujuan).
-     * @param {number} angle - Sudut rotasi (dalam radian).
-     * @param {number} x - Komponen X dari sumbu rotasi (satuan).
-     * @param {number} y - Komponen Y dari sumbu rotasi (satuan).
-     * @param {number} z - Komponen Z dari sumbu rotasi (satuan).
+     * Catatan: Karena V harus berupa vektor satuan, kita asumsikan [x, y, z] yang masuk sudah dinormalisasi 
+     * atau fungsi ini akan menerima vektor yang sudah dinormalisasi dari pemanggil.
      */
     rotateArbitraryAxis: function (M, angle, x, y, z) {
         var c = Math.cos(angle);
@@ -137,10 +157,10 @@ var LIBS = {
 
         // Matriks rotasi R di sekitar sumbu sembarang [x, y, z] (Rumus Rodrigues)
         var R = [
-            x * x * C + c,      x * y * C - z * s,    x * z * C + y * s,    0,
-            y * x * C + z * s,  y * y * C + c,        y * z * C - x * s,    0,
-            z * x * C - y * s,  z * y * C + x * s,    z * z * C + c,        0,
-            0,                  0,                    0,                    1
+            x * x * C + c, 		x * y * C - z * s, 	x * z * C + y * s, 	0,
+            y * x * C + z * s, 	y * y * C + c, 		y * z * C - x * s, 	0,
+            z * x * C - y * s, 	z * y * C + x * s, 	z * z * C + c, 		0,
+            0, 					0, 					0, 					1
         ];
         
         // M = R * M (Rotasi diterapkan ke matriks M)

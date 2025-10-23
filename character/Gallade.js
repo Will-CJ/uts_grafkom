@@ -93,11 +93,12 @@ export class Gallade {
     BREATH_AMPLITUDE = 0.025; // Normalnya 0.05. Dibuat 0.5 agar sangat terlihat.
     breathingDelayStartTime = 0;
 
-    constructor(GL, SHADER_PROGRAM, _position, _MMatrix) {
+    constructor(GL, SHADER_PROGRAM, _position, _MMatrix, _normal) {
         this.GL = GL;
         this.SHADER_PROGRAM = SHADER_PROGRAM;
         this._position = _position;
         this._MMatrix = _MMatrix;
+        this._normal = _normal;
         const LIGHT_PINK = [1.0, 0.467, 0.486];
         const BLACK = [0.0, 0.0, 0.0];
         const eyeRadiusWhite = 0.05;
@@ -134,7 +135,7 @@ export class Gallade {
         // =============================================================
         
         // Pinggang/Pelvis (Ellipsoid putih) sebagai root
-        this.pinggang = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, 0.3, 0.2, 0.2, 30, 30, 360, this.COLOR_PUTIH);
+        this.pinggang = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, 0.3, 0.2, 0.2, 30, 30, 360, this.COLOR_PUTIH);
         this.rootObject = this.pinggang;
         LIBS.translateY(this.pinggang.POSITION_MATRIX, 0.6)
         LIBS.scale(this.pinggang.POSITION_MATRIX, GLOBAL_SCALE_FACTOR, GLOBAL_SCALE_FACTOR, GLOBAL_SCALE_FACTOR);
@@ -144,11 +145,11 @@ export class Gallade {
         // =============================================================
 
         // 1. Badan Utama (Cylinder putih)
-        this.badanBiru = new Cylinder(GL, SHADER_PROGRAM, _position, _MMatrix, 0.15, 0.75, 30, this.COLOR_PUTIH);
+        this.badanBiru = new Cylinder(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, 0.15, 0.75, 30, this.COLOR_PUTIH);
         LIBS.translateY(this.badanBiru.POSITION_MATRIX, 0.3); // Posisikan di atas pinggang
 
         // 2. Armor Merah (ExtrudedShape) - Diletakkan di depan badan silinder
-        this.badanMerah = new BSplineExtruded(GL, SHADER_PROGRAM, _position, _MMatrix, curveBadanMerah, 0.05, 25, this.COLOR_MERAH);
+        this.badanMerah = new BSplineExtruded(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, curveBadanMerah, 0.05, 25, this.COLOR_MERAH);
         LIBS.scale(this.badanMerah.POSITION_MATRIX, 0.5, 3.0, 1.0);
         LIBS.translateY(this.badanMerah.POSITION_MATRIX, 0.5);
         LIBS.translateZ(this.badanMerah.POSITION_MATRIX, 0.02);
@@ -162,11 +163,11 @@ export class Gallade {
         // =============================================================
         
         // Kepala Putih (Ellipsoid) - Basis wajah
-        this.kepalaPutih = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, 0.23, 0.23, 0.23, 20, 20, 360, this.COLOR_PUTIH);
+        this.kepalaPutih = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, 0.23, 0.23, 0.23, 20, 20, 360, this.COLOR_PUTIH);
         LIBS.translateY(this.kepalaPutih.POSITION_MATRIX, 0.5);
 
         // 1. Mata Kiri (Bagian Putih/Pink)
-        const leftEye = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, eyeRadiusWhite, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
+        const leftEye = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, _normal, eyeRadiusWhite, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
         LIBS.translateY(leftEye.POSITION_MATRIX, -0.035); // Posisi Y relatif ke kepalaPutih (0.5)
         LIBS.translateX(leftEye.POSITION_MATRIX, -0.11); // Geser ke kiri
         LIBS.translateZ(leftEye.POSITION_MATRIX, 0.16); // Geser ke depan (Z positif)
@@ -175,7 +176,7 @@ export class Gallade {
         this.kepalaPutih.childs.push(leftEye); // Mata adalah anak dari kepalaPutih
 
         // 2. Mata Kanan (Bagian Putih/Pink)
-        const RightEye = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, eyeRadiusWhite, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
+        const RightEye = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, _normal, eyeRadiusWhite, eyeRadiusWhite+0.03, eyeRadiusWhite, 30, 30, 360, LIGHT_PINK);
         LIBS.translateY(RightEye.POSITION_MATRIX, -0.035); // Posisi Y relatif ke kepalaPutih (0.5)
         LIBS.translateX(RightEye.POSITION_MATRIX, 0.11); // Geser ke kanan
         LIBS.translateZ(RightEye.POSITION_MATRIX, 0.16);  // Geser ke depan (Z positif)
@@ -185,14 +186,14 @@ export class Gallade {
 
         // 3. Pupil Kiri (Anak dari Mata Kiri)
         const pupilRadius = 0.01;
-        const leftPupil = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
+        const leftPupil = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, _normal, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
         LIBS.translateY(leftPupil.POSITION_MATRIX, -0.02); // Posisi Y relatif ke leftEye
         LIBS.translateZ(leftPupil.POSITION_MATRIX, 0.04); // Posisi Z relatif ke leftEye
         LIBS.rotateX(leftPupil.POSITION_MATRIX, Math.PI / 15);
         leftEye.childs.push(leftPupil); // Pupil adalah anak dari leftEye
 
         // 4. Pupil Kanan (Anak dari Mata Kanan)
-        const rightPupil = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
+        const rightPupil = new Ellipsoid(GL, SHADER_PROGRAM, this._position, this._MMatrix, _normal, pupilRadius+0.005, pupilRadius+0.022, pupilRadius, 30, 30, 360, BLACK);
         LIBS.translateY(rightPupil.POSITION_MATRIX, -0.02); // Posisi Y relatif ke RightEye
         LIBS.translateZ(rightPupil.POSITION_MATRIX, 0.04); // Posisi Z relatif ke RightEye
         LIBS.rotateX(rightPupil.POSITION_MATRIX, Math.PI / 15);
@@ -210,7 +211,7 @@ export class Gallade {
 
         // Kanan (di sumbu +X)
         this.kumisKanan = new Cone(
-        GL, SHADER_PROGRAM, _position, _MMatrix,
+        GL, SHADER_PROGRAM, _position, _MMatrix, _normal,
         MUSTACHE_BASE_R, 0, 360, 0, 0, MUSTACHE_LEN, 30, this.COLOR_PUTIH
         );
         // arahkan ke depan (sumbu Z)
@@ -223,7 +224,7 @@ export class Gallade {
 
         // Kiri (mirror di sumbu -X)
         this.kumisKiri = new Cone(
-        GL, SHADER_PROGRAM, _position, _MMatrix,
+        GL, SHADER_PROGRAM, _position, _MMatrix, _normal,
         MUSTACHE_BASE_R, 0, 360, 0, 0, MUSTACHE_LEN, 30, this.COLOR_PUTIH
         );
         LIBS.rotateX(this.kumisKiri.POSITION_MATRIX, LIBS.degToRad(300));
@@ -243,7 +244,7 @@ export class Gallade {
 
         // Kanan bawah
         this.kumisKananBawah = new Cone(
-        GL, SHADER_PROGRAM, _position, _MMatrix,
+        GL, SHADER_PROGRAM, _position, _MMatrix, _normal,
         MUSTACHE_BASE_R * 0.65, 0, 360, 0, 0, MUSTACHE_LEN_SMALL, 30, this.COLOR_PUTIH
         );
         LIBS.rotateX(this.kumisKananBawah.POSITION_MATRIX, MUSTACHE_DOWN_ANGLE);
@@ -255,7 +256,7 @@ export class Gallade {
 
         // Kiri bawah
         this.kumisKiriBawah = new Cone(
-        GL, SHADER_PROGRAM, _position, _MMatrix,
+        GL, SHADER_PROGRAM, _position, _MMatrix, _normal,
         MUSTACHE_BASE_R * 0.65, 0, 360, 0, 0, MUSTACHE_LEN_SMALL, 30, this.COLOR_PUTIH
         );
         LIBS.rotateX(this.kumisKiriBawah.POSITION_MATRIX, MUSTACHE_DOWN_ANGLE);
@@ -270,7 +271,7 @@ export class Gallade {
 
         // Telinga Kiri (Ellipsoid Oval - Mirip Telinga Bundar Asli Anda)
         this.telingaKiri = new Ellipsoid(
-            this.GL, this.SHADER_PROGRAM, this._position, this._MMatrix, 
+            this.GL, this.SHADER_PROGRAM, this._position, this._MMatrix, _normal, 
             0.0, 0.4, 0.15,
             10, 10, 
             180, 
@@ -284,7 +285,7 @@ export class Gallade {
 
          // Telinga Kiri (Ellipsoid Oval - Mirip Telinga Bundar Asli Anda)
         var telingaKiri2 = new Ellipsoid(
-            this.GL, this.SHADER_PROGRAM, this._position, this._MMatrix, 
+            this.GL, this.SHADER_PROGRAM, this._position, this._MMatrix, _normal, 
             0.1, 0.36, 0.15,
             10, 10, 
             330,
@@ -306,7 +307,7 @@ export class Gallade {
 
         const headGreen1Radius = 0.228;
         const headGreen1 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _MMatrix,
+            GL, SHADER_PROGRAM, _position, _MMatrix, _normal,
             headGreen1Radius, headGreen1Radius, headGreen1Radius,
             30, 30, 150, LIGHT_PASTEL_GREEN
         );
@@ -316,7 +317,7 @@ export class Gallade {
 
         const headGreen2Radius = 0.23;
         const headGreen2 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _MMatrix,
+            GL, SHADER_PROGRAM, _position, _MMatrix, _normal,
             headGreen2Radius, headGreen2Radius, headGreen2Radius,
             30, 30, 90, LIGHT_PASTEL_GREEN
         );
@@ -328,7 +329,7 @@ export class Gallade {
 
         const headGreen3Radius = 0.23;
         const headGreen3 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _MMatrix,
+            GL, SHADER_PROGRAM, _position, _MMatrix, _normal,
             headGreen3Radius, headGreen3Radius, headGreen3Radius,
             30, 30, 90, LIGHT_PASTEL_GREEN
         );
@@ -340,7 +341,7 @@ export class Gallade {
 
         const headGreen4Radius = 0.23;
         const headGreen4 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _MMatrix,
+            GL, SHADER_PROGRAM, _position, _MMatrix, _normal,
             headGreen4Radius, headGreen4Radius, headGreen4Radius,
             30, 30, 90, LIGHT_PASTEL_GREEN
         );
@@ -352,7 +353,7 @@ export class Gallade {
         
         const headGreen5Radius = HEAD_RADIUS + 0.001; // Sedikit lebih besar dari kepala putih
         var headGreen5 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _MMatrix,
+            GL, SHADER_PROGRAM, _position, _MMatrix, _normal,
             headGreen5Radius, headGreen5Radius, headGreen5Radius,
             30, 30, 180, // Dipotong setengah (180 derajat)
             LIGHT_PASTEL_GREEN
@@ -365,7 +366,7 @@ export class Gallade {
         
         // Kepala Hijau Utama/Leher/Penghubung (Tetap)
         const headRadiusGreen = 0.18;
-        this.kepalaHijau = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, headRadiusGreen+0.04, headRadiusGreen, headRadiusGreen+0.06, 30, 30, 360, LIGHT_PASTEL_GREEN);
+        this.kepalaHijau = new Ellipsoid(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, headRadiusGreen+0.04, headRadiusGreen, headRadiusGreen+0.06, 30, 30, 360, LIGHT_PASTEL_GREEN);
         const headGreenPositionY = (bodyHeight / 2) + headRadiusGreen - 0.05;
         LIBS.translateY(this.kepalaHijau.POSITION_MATRIX, headGreenPositionY);
         LIBS.translateZ(this.kepalaHijau.POSITION_MATRIX, -0.0001);
@@ -384,7 +385,7 @@ export class Gallade {
         const CHEEK_OFFSET_Z = 0.0; // Di tengah Z
 
         // 1. Pipi Kanan (menonjol ke X positif)
-        this.pipiKanan = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, CHEEK_RADIUS, 0, 360, 0, 0, 15, this.COLOR_PUTIH);
+        this.pipiKanan = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, CHEEK_RADIUS, 0, 360, 0, 0, 15, this.COLOR_PUTIH);
         LIBS.scale(this.pipiKanan.POSITION_MATRIX, 1.0, 0.1, 0.3);
         LIBS.translateX(this.pipiKanan.POSITION_MATRIX, CHEEK_OFFSET_X);
         LIBS.translateY(this.pipiKanan.POSITION_MATRIX, CHEEK_OFFSET_Y);
@@ -392,7 +393,7 @@ export class Gallade {
         LIBS.rotateZ(this.pipiKanan.POSITION_MATRIX, LIBS.degToRad(270)); 
 
         // 2. Pipi Kiri (menonjol ke X negatif)
-        this.pipiKiri = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, CHEEK_RADIUS, 0, 360, 0, 0, 15, this.COLOR_PUTIH);
+        this.pipiKiri = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, CHEEK_RADIUS, 0, 360, 0, 0, 15, this.COLOR_PUTIH);
         LIBS.scale(this.pipiKiri.POSITION_MATRIX, 1.0, 0.1, 0.3);
         LIBS.translateX(this.pipiKiri.POSITION_MATRIX, -CHEEK_OFFSET_X);
         LIBS.translateY(this.pipiKiri.POSITION_MATRIX, CHEEK_OFFSET_Y);
@@ -414,7 +415,7 @@ export class Gallade {
         const ARM_OFFSET_X = 0.25;
         const BAHU_LENGTH_FACTOR = 7.05;
 
-        this.bahuKiri = new Cylinder(GL, SHADER_PROGRAM, _position, _MMatrix, BAHU_RADIUS, BAHU_HEIGHT, 15, this.COLOR_HIJAU);
+        this.bahuKiri = new Cylinder(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, BAHU_RADIUS, BAHU_HEIGHT, 15, this.COLOR_HIJAU);
         LIBS.scale(this.bahuKiri.POSITION_MATRIX, 1.0, BAHU_LENGTH_FACTOR, 1.0);
         LIBS.translateY(this.bahuKiri.POSITION_MATRIX, ARM_START_Y);
         LIBS.translateX(this.bahuKiri.POSITION_MATRIX, ARM_OFFSET_X);
@@ -422,7 +423,7 @@ export class Gallade {
         this.badanBiru.childs.push(this.bahuKiri);
         
         // Lengan Kiri (Elliptic Paraboloid - Pedang)
-        this.lenganKiri = new EllipticParaboloid(GL, SHADER_PROGRAM, _position, _MMatrix, 0.3, 0.05, 1.0, 30, 30, this.COLOR_HIJAU);
+        this.lenganKiri = new EllipticParaboloid(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, 0.3, 0.05, 1.0, 30, 30, this.COLOR_HIJAU);
         LIBS.translateY(this.lenganKiri.POSITION_MATRIX, 0.4);
         LIBS.translateX(this.lenganKiri.POSITION_MATRIX, 0.43);
         LIBS.rotateZ(this.lenganKiri.POSITION_MATRIX, LIBS.degToRad(140)); // Angkat dan putar seperti pose
@@ -430,7 +431,7 @@ export class Gallade {
         LIBS.scale(this.lenganKiri.POSITION_MATRIX, paraboloidScale, paraboloidScale, paraboloidScale);
         
         // Bahu Kanan
-        this.bahuKanan = new Cylinder(GL, SHADER_PROGRAM, _position, _MMatrix, BAHU_RADIUS, BAHU_HEIGHT, 15, this.COLOR_HIJAU);
+        this.bahuKanan = new Cylinder(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, BAHU_RADIUS, BAHU_HEIGHT, 15, this.COLOR_HIJAU);
         LIBS.scale(this.bahuKanan.POSITION_MATRIX, 1.0, BAHU_LENGTH_FACTOR, 1.0); 
         LIBS.translateY(this.bahuKanan.POSITION_MATRIX, ARM_START_Y);
         LIBS.translateX(this.bahuKanan.POSITION_MATRIX, -ARM_OFFSET_X); 
@@ -439,7 +440,7 @@ export class Gallade {
         this.badanBiru.childs.push(this.bahuKanan);
 
         // Lengan Kanan (Elliptic Paraboloid - Pedang)
-        this.lenganKanan = new EllipticParaboloid(GL, SHADER_PROGRAM, _position, _MMatrix, 0.3, 0.05, 1.0, 30, 30, this.COLOR_HIJAU);
+        this.lenganKanan = new EllipticParaboloid(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, 0.3, 0.05, 1.0, 30, 30, this.COLOR_HIJAU);
         LIBS.translateY(this.lenganKanan.POSITION_MATRIX, 0.4);
         LIBS.translateX(this.lenganKanan.POSITION_MATRIX, -0.43);
         LIBS.rotateZ(this.lenganKanan.POSITION_MATRIX, LIBS.degToRad(40)); // Angkat dan putar
@@ -453,13 +454,13 @@ export class Gallade {
         // =============================================================
 
         // Kaki Kiri (Cone - Celana)
-        this.kakiKiri = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, 0.2, 0, 360, 0, 0, 0.4, 30, this.COLOR_PUTIH);
+        this.kakiKiri = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, 0.2, 0, 360, 0, 0, 0.4, 30, this.COLOR_PUTIH);
         LIBS.translateY(this.kakiKiri.POSITION_MATRIX, -0.4);
         LIBS.translateX(this.kakiKiri.POSITION_MATRIX, 0.12);
         LIBS.scale(this.kakiKiri.POSITION_MATRIX, 0.5, 3, 0.5); 
         
         // Kaki Kanan (Cone - Celana)
-        this.kakiKanan = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, 0.2, 0, 360, 0, 0, 0.4, 30, this.COLOR_PUTIH);
+        this.kakiKanan = new Cone(GL, SHADER_PROGRAM, _position, _MMatrix, _normal, 0.2, 0, 360, 0, 0, 0.4, 30, this.COLOR_PUTIH);
         LIBS.translateY(this.kakiKanan.POSITION_MATRIX, -0.4);
         LIBS.translateX(this.kakiKanan.POSITION_MATRIX, -0.12);
         LIBS.scale(this.kakiKanan.POSITION_MATRIX, 0.5, 3, 0.5); 
