@@ -8,6 +8,8 @@ import { Ralts } from "./character/Ralts.js";
 // Mengimpor kelas Environment yang terpisah
 import { FloatingIsland } from "./environment/FloatingIsland.js"; 
 import { SkyBox } from "./environment/SkyBox.js"; 
+import { Tree } from "./environment/Tree.js";
+import { Grass } from "./environment/Grass.js";
 
 function main() {
     /** @type {HTMLCanvasElement} */
@@ -164,6 +166,20 @@ function main() {
         _sky_uv, 
         _sky_sampler
     ); 
+   
+    // --- INISIALISASI POHON ---
+    const tree = new Tree(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
+    const treeModelMatrix = LIBS.get_I4();
+
+    // Geser pohon agar muncul di belakang Kirlia, di Y=0
+    LIBS.translateZ(treeModelMatrix, -2.0); // Geser ke belakang
+    LIBS.translateX(treeModelMatrix, -2.5); // Geser ke kiri
+    // Tidak perlu translateY, karena batang sudah diatur berdiri di Y=0.0
+    tree.setup();
+
+    // --- INISIALISASI RUMPUT 3D BARU ---
+    const grass = new Grass(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
+    grass.setup(); // Setup buffer rumput
 
 // ----------------------------------------------------------------------
 
@@ -283,6 +299,8 @@ function main() {
         /*--- FLOATING ISLAND DRAW ---*/
         floatingIsland.render();
 
+        tree.render(treeModelMatrix);
+
         /*--- CHARACTER DRAW ---*/
        
         ralts.render(raltsModelMatrix);
@@ -294,6 +312,9 @@ function main() {
 
         // Gallade
         gallade.render(galladeModelMatrix);
+
+        /*--- RUMPUT 3D DRAW (Menggunakan Matriks Pulau sebagai Parent) ---*/
+        grass.render(islandModelMatrix);
 
         GL.flush();
         window.requestAnimationFrame(animate);
