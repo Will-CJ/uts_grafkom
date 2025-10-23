@@ -90,7 +90,7 @@ export class Kirlia {
         // --- EYE BLINK ANIMATION VARIABLES (BARU UNTUK KEDIP MATA) ---
         this.blinkStartTime = 0;
         this.isBlinking = false;
-        this.blinkDuration = 1000; // Total 1.0 detik (0.5s tutup + 0.5s buka)
+        this.blinkDuration = 600; // Total 1.0 detik (0.5s tutup + 0.5s buka)
         this.currentScaleY = 1.0; // Skala Y saat ini
         this.blinkInterval = 5000; // Interval kedip (misalnya, kedip setiap 5 detik)
         this.nextBlinkTime = performance.now() + this.blinkInterval + (Math.random() * 2000); // Kedip pertama acak
@@ -501,8 +501,8 @@ export class Kirlia {
             this.currentScaleY = 1.0;
         }
 
-        // Terapkan Scaling ke Mata this.leftEyeR dan this.rightEyeR
-        // Ini adalah lapisan pink/merah muda pada mata.
+        // Terapkan Scaling ke Mata
+        // Ini adalah lapisan putih kedua pada mata.
 
         // Mata Kiri (leftEyeB2)
         LIBS.set_I4(this.leftEyeB2.MOVE_MATRIX); // Reset MOVE_MATRIX
