@@ -54,10 +54,20 @@ export class Ralts {
 
         // --- Variabel Orb ---
         this.orbStartTime = 0;
-        this.orbDuration = 500; // 0.5 detik
+        this.orbDuration = 750; // 0.75 detik
         this.orbBaseScale = 0.2; // Skala Orb saat progress = 0 (0.2 kali ukuran base object)
-        this.orbMaxScale = 0.5; // DIUBAH: Delta skala Orb (0.5 kali ukuran base object)
-        this.orbMaxDistance = 1.5; // Jarak maju maksimum Orb
+        this.orbMaxScale = 0.8; // DIUBAH: Delta skala Orb (0.5 kali ukuran base object)
+        this.orbMaxDistance = 0.005; // Jarak maju maksimum Orb
+
+        // --- BARU: Variabel Rotasi Sumbu Sembarang Orb (dari Kirlia) ---
+        this.orbSelfRotationAngle = 0;
+        
+        // Sumbu Rotasi Sembarang (V = [1, 1.5, 0] dinormalisasi, seperti Orb 1 Kirlia)
+        const ORB_AXIS_X = -0.5;
+        const ORB_AXIS_Y = 0.75;
+        const ORB_AXIS_Z = 0.0;
+        let length = Math.sqrt(ORB_AXIS_X * ORB_AXIS_X + ORB_AXIS_Y * ORB_AXIS_Y + ORB_AXIS_Z * ORB_AXIS_Z);
+        this.orbAxis = [ORB_AXIS_X / length, ORB_AXIS_Y / length, ORB_AXIS_Z / length];
 
         // --- Variabel Idle/Breathing Movement ---
         this.breatheBodyAmplitude = 0.01;
@@ -366,7 +376,11 @@ export class Ralts {
 
         if (!isActivePhase) {
             // Sembunyikan Orb jika Ralts tidak dalam fase Orb
-            LIBS.scale(this.orb.MOVE_MATRIX, 0, 0, 0);
+            
+            // --- PERBAIKAN DI SINI ---
+            LIBS.set_I4(this.orb.MOVE_MATRIX); // 1. Reset ke Identitas
+            LIBS.scale(this.orb.MOVE_MATRIX, 0, 0, 0); // 2. Terapkan skala 0
+            
             this.orbStartTime = 0;
             return;
         }
@@ -376,6 +390,10 @@ export class Ralts {
              this.orbStartTime = time; 
         }
 
+        // --- BARU: Update sudut rotasi diri (seperti Kirlia) ---
+        // Kita gunakan 'time' agar rotasi terus berlanjut (bukan 'orbElapsedTime')
+        this.orbSelfRotationAngle = time * 0.004; // Kecepatan rotasi diri
+
         const orbElapsedTime = time - this.orbStartTime;
 
         // Progress animasi maju/scale (0.5 detik). Progress TIDAK di-clamp ke 1.0!
@@ -383,12 +401,10 @@ export class Ralts {
 
         // Hitung scaling dan translation
         // Skala total = Skala Base + (Delta Skala * Progress)
-        // Skala total = 0.2 + ((1.0 + 0.5 - 0.2) * progress)
-        // Skala akhir: 0.2 + 0.5 = 0.7. Skala Awal: 0.2
         const currentScale = this.orbBaseScale + (this.orbMaxScale * progress); // Skala Maks = 0.2 + 0.5 = 0.7
         const currentZ = this.orbMaxDistance * progress;
         
-        // Posisi Y Ralts saat ini (tinggi di udara), ditambah offset agar di atas kepala (misalnya 0.25 di atas currentY)
+        // Posisi Y Ralts saat ini (tinggi di udara), ditambah offset agar di atas kepala
         const raltsY = this.currentY + 0.25; 
         
         // Orb tunggal ditempatkan di tengah (X=0)
@@ -399,8 +415,18 @@ export class Ralts {
         LIBS.translateZ(O_M, this.currentZ + currentZ); // Orb maju dari posisi Z Ralts saat ini
         LIBS.translateX(O_M, this.currentX);
         
+        // Menerapkan scaling
         LIBS.scale(O_M, currentScale, currentScale, currentScale);
-        this.orb.MOVE_MATRIX = O_M;
+        
+        // --- BARU: Menerapkan Rotasi Sumbu Sembarang (seperti Kirlia) ---
+        // 1. Buat matriks rotasi sembarang
+        let arbitraryRotMatrix = LIBS.get_I4();
+        LIBS.rotateArbitraryAxis(arbitraryRotMatrix, this.orbSelfRotationAngle, 
+            this.orbAxis[0], this.orbAxis[1], this.orbAxis[2]);
+            
+        // 2. Gabungkan: Matriks Gerakan (Translasi + Skala) * Matriks Rotasi
+        // Ini akan merotasi orb pada sumbu lokalnya
+        this.orb.MOVE_MATRIX = LIBS.multiply(O_M, arbitraryRotMatrix);
     }
 
 
@@ -472,7 +498,11 @@ export class Ralts {
 
                 case MOVEMENT_STATE.JUMP_DOWN: {
                     // Orb dihilangkan/direset di sini.
-                    LIBS.scale(this.orb.MOVE_MATRIX, 0, 0, 0); 
+                    
+                    // --- PERBAIKAN DI SINI ---
+                    LIBS.set_I4(this.orb.MOVE_MATRIX); // 1. Reset ke Identitas
+                    LIBS.scale(this.orb.MOVE_MATRIX, 0, 0, 0); // 2. Terapkan skala 0
+
                     this.orbStartTime = 0; 
 
                     const jumpElapsedTime = Math.min(elapsedTime, this.jumpDuration);
@@ -576,9 +606,8 @@ export class Ralts {
         }
 
         // --- 4. Logika Orb ---
-        if (this.currentMovementState === MOVEMENT_STATE.HOVER_WAVING) {
-            this.applyOrbAnimation(time);
-        } 
+        // (Dipanggil di applyOrbAnimation jika state HOVER_WAVING)
+        this.applyOrbAnimation(time);
 
         // --- 5. Gabungkan Global Transform (X/Y/Z-Move + Idle Y) ---
         let globalTransformMatrix = LIBS.get_I4();
@@ -605,6 +634,8 @@ export class Ralts {
         this.allObjects.forEach(obj => obj.render(combinedMatrix));
         
         // Render Orb
+        // Orb dirender relatif terhadap parentMatrix (dunia)
+        // karena posisinya sudah dihitung secara global di applyOrbAnimation
         this.orb.render(parentMatrix); 
     }
 }
