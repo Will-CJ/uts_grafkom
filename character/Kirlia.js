@@ -7,12 +7,12 @@ import { Cone } from "../object/Cone.js";
 import { Crescent } from "../object/Crescent.js"
 import { ModifiedEllipsoid } from "../object/ModifiedEllipsoid.js"
 
-// Definisikan state animasi pergerakan Z
+// Definisikan state animasi pergerakan
 const MOVEMENT_STATE = {
     IDLE: 0,
     WALK_FRONT: 1,
     WALK_BACK: 2,
-    BOWING: 3 // State untuk Bowing
+    BOWING: 3
 };
 
 // Definisikan state untuk rotasi putar balik
@@ -22,10 +22,8 @@ const ROTATION_STATE = {
     ROTATING_TO_FRONT: 2 // Rotasi 180 -> 0 (Saat selesai walk back)
 };
 
-// Buat kelas untuk Pokémon Kirlia
 export class Kirlia {
     constructor(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal) {
-        // --- Menyimpan parameter GL (PENTING untuk mencegah error setup) ---
         this.GL = GL;
         this.SHADER_PROGRAM = SHADER_PROGRAM;
         this._position = _position;
@@ -33,84 +31,83 @@ export class Kirlia {
         this._normal = _normal;
         const GL_PARAMS = [this.GL, this.SHADER_PROGRAM, this._position, this._Mmatrix, this._normal];
 
-        // Mendefinisikan warna-warna yang digunakan
+        // WARNA
         const WHITE = [1.0, 1.0, 1.0];
         const LIGHT_PASTEL_GREEN = [0.733, 0.984, 0.741];
         const LIGHT_PINK = [1.0, 0.667, 0.686];
         const BLACK = [0.0, 0.0, 0.0];
-        // WARNA BARU UNTUK ORB
-        const ORB_COLOR = [0.0, 0.9, 1.0]; // Cyan terang
-        // WARNA BARU UNTUK ORB 2 (Dibuat sedikit berbeda)
-        const ORB2_COLOR = [1.0, 0.0, 0.9]; // Magenta terang
+        const ORB_COLOR = [0.0, 0.9, 1.0];
+        const ORB2_COLOR = [1.0, 0.0, 0.9];
 
         // --- Animation State Variables (Bowing) ---
         this.bowStartTime = 0;
-        this.bowDuration = 1800; // 2 seconds in milliseconds
-        this.maxBowAngle = 70 * Math.PI / 180; // 90 degrees in radians
+        this.bowDuration = 1800;
+        this.maxBowAngle = 70 * Math.PI / 180;
         this.currentBowAngle = 0;
 
         // --- Animation State Variables (Movement) ---
         this.currentMovementState = MOVEMENT_STATE.IDLE;
         this.movementStartTime = 0;
-        this.movementDuration = 2000; // 2 detik untuk maju/mundur
-        this.delayDuration = 500;    // 1 detik delay (BARU)
-        this.targetZ = 3.0; // Jarak translasi Z
-        this.currentZ = 0.0; // Posisi Z saat ini
+        this.movementDuration = 2000;
+        this.delayDuration = 500;
+        this.targetZ = 3.0;
+        this.currentZ = 0.0;
         
-        // --- Animation State Variables (Rotation BARU) ---
+        // --- Animation State Variables (Rotation) ---
         this.currentRotationState = ROTATION_STATE.STATIONARY;
         this.rotationStartTime = 0;
-        this.rotationDuration = 1000; // 1 detik untuk rotasi 180 derajat
-        this.currentRotationY = 0; // Rotasi Y saat ini (radian)
+        this.rotationDuration = 1000;
+        this.currentRotationY = 0;
 
-        // --- Breathing/Idle Movement Variables (BARU) ---
-        this.breatheBodyAmplitude = 0.02; // Naik-turun badan (0.02)
-        this.breatheHeadAmplitude = 0.01; // Naik-turun kepala (0.01)
-        this.breatheSpeed = 0.005; // Kecepatan bernafas (sama untuk semua)
+        // --- Breathing/Idle Movement Variables ---
+        this.breatheBodyAmplitude = 0.02;
+        this.breatheHeadAmplitude = 0.01;
+        this.breatheSpeed = 0.005;
         
-        // --- ORB ARBITRARY AXIS ROTATION VARIABLES (BARU) ---
+        // --- ORB ARBITRARY AXIS ROTATION VARIABLES ---
         this.orbRadius = 0.02;
-        this.orbOrbitRadius = 0.8; // Jarak orb dari pusat Kirlia (Body)
-        this.orbRotationAngle = 0; // Sudut putaran orb mengelilingi
-        this.orbSelfRotationAngle = 0; // Sudut rotasi diri sendiri pada sumbu sembarang
+        this.orbOrbitRadius = 0.8;
+        this.orbRotationAngle = 0;
+        this.orbSelfRotationAngle = 0;
         
-        // Sumbu Rotasi Sembarang ORB 1 (V = [1, 1.5, 0] dinormalisasi)
+        // Sumbu Rotasi Sembarang ORB 1 (V = [1, 1.5, 0])
         const ORB_AXIS_X = 1.0;
         const ORB_AXIS_Y = 1.5;
         const ORB_AXIS_Z = 0.0;
         let length = Math.sqrt(ORB_AXIS_X * ORB_AXIS_X + ORB_AXIS_Y * ORB_AXIS_Y + ORB_AXIS_Z * ORB_AXIS_Z);
         this.orbAxis = [ORB_AXIS_X / length, ORB_AXIS_Y / length, ORB_AXIS_Z / length];
 
-        // Sumbu Rotasi Sembarang ORB 2 (BARU: V' = [-1, 1.5, 0] dinormalisasi)
+        // Sumbu Rotasi Sembarang ORB 2 (V' = [-1, 1.5, 0])
         const ORB2_AXIS_X = -1.0;
         const ORB2_AXIS_Y = 1.5;
         const ORB2_AXIS_Z = 0.0;
         length = Math.sqrt(ORB2_AXIS_X * ORB2_AXIS_X + ORB2_AXIS_Y * ORB2_AXIS_Y + ORB2_AXIS_Z * ORB2_AXIS_Z);
         this.orb2Axis = [ORB2_AXIS_X / length, ORB2_AXIS_Y / length, ORB2_AXIS_Z / length];
         
-        // --- EYE BLINK ANIMATION VARIABLES (BARU UNTUK KEDIP MATA) ---
+        // --- EYE BLINK ANIMATION VARIABLES  ---
         this.blinkStartTime = 0;
         this.isBlinking = false;
         this.blinkDuration = 600; // Total 1.0 detik (0.5s tutup + 0.5s buka)
         this.currentScaleY = 1.0; // Skala Y saat ini
-        this.blinkInterval = 5000; // Interval kedip (misalnya, kedip setiap 5 detik)
+        this.blinkInterval = 5000; // Interval kedip
         this.nextBlinkTime = performance.now() + this.blinkInterval + (Math.random() * 2000); // Kedip pertama acak
 
-        // --- Membuat semua bagian tubuh Kirlia... (Bagian ini tidak berubah) ---
+
+        // =======================================================
+        // --- OBJEK KIRLIA ---
+        // =======================================================
+        //Pinggul
         const bodyGreenRadius = 0.1;
         this.bodyGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, bodyGreenRadius-0.01, bodyGreenRadius-0.03, bodyGreenRadius-0.01, 30, 30, 360, LIGHT_PASTEL_GREEN);
-        
-        // SIMPAN POSISI Y AWAL bodyGreen (Pivot untuk rotasi)
         this.bodyGreenInitialY = -0.14; 
         LIBS.translateY(this.bodyGreen.POSITION_MATRIX, this.bodyGreenInitialY);
 
+        //Badan
         const bodyRadius = 0.026;
         const bodyHeight = 0.38;
         this.body = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, bodyRadius, bodyHeight, 30, WHITE);
         LIBS.translateY(this.body.POSITION_MATRIX, 0.14);
         this.bodyGreen.childs.push(this.body)
-        
-        // ... (Kode bagian tubuh lainnya tidak berubah) ...
         
         const middleBodyRadius = 0.1;
         const middleBodyHeight = 0.28;
@@ -153,7 +150,7 @@ export class Kirlia {
         LIBS.translateY(legRightBottom.POSITION_MATRIX, -0.18);
         this.legRightTop.childs.push(legRightBottom);
         
-        //Tangan (Transformasi dinamis akan diterapkan di render/MOVE_MATRIX)
+        //Tangan
         const ArmLeftTopRadius = 0.016;
         const ArmLeftTopHeight = 0.26;
         this.ArmLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, ArmLeftTopRadius, ArmLeftTopHeight, 30, WHITE);
@@ -201,13 +198,13 @@ export class Kirlia {
         //Rambut depan (Crescent)
         this.frontHair = new Crescent(
             ...GL_PARAMS,
-            0.15,  // majorRadius (7)
-            0.17, // minorRadius (8) - Dibuat positif untuk lekukan normal
-            90, // startAngDeg (9)
-            270, // endAngDeg (10)
-            32,  // majorSegments (11)
-            32, // minorSegments (12)
-            LIGHT_PASTEL_GREEN  // color (13)
+            0.15,  // majorRadius
+            0.17, // minorRadius - Dibuat positif untuk lekukan normal
+            90, // startAngDeg
+            270, // endAngDeg
+            32,  // majorSegments
+            32, // minorSegments
+            LIGHT_PASTEL_GREEN  // color
         );
         LIBS.translateZ(this.frontHair.POSITION_MATRIX, 0.06)
         LIBS.translateY(this.frontHair.POSITION_MATRIX, -0.12)
@@ -324,7 +321,7 @@ export class Kirlia {
         LIBS.rotateY(this.rightEyeB3.POSITION_MATRIX, LIBS.degToRad(-2))
         this.rightEyeR.childs.push(this.rightEyeB3)
 
-        //Rambut
+        //Rambut Kanan Kiri
         const hairBaseA = 0.15;
         const hairBaseB = 0.25;
         const hairHeight = 0.43;
@@ -424,34 +421,33 @@ export class Kirlia {
         LIBS.rotateY(headHornRight.POSITION_MATRIX, Math.PI / 6);
         this.body.childs.push(headHornRight);
         
-        // --- MEMBUAT ORB 1 (Cyan) ---
+        // --- ORB 1 (Cyan) ---
         this.orb = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, 
             this.orbRadius, this.orbRadius, this.orbRadius, 
             20, 20, 360, ORB_COLOR);
-        LIBS.translateX(this.orb.POSITION_MATRIX, -0.3); // Posisi awal arb (di luar)
-        LIBS.translateY(this.orb.POSITION_MATRIX, -0.2); // Posisi awal arb (di bawah)
+        LIBS.translateX(this.orb.POSITION_MATRIX, -0.3);
+        LIBS.translateY(this.orb.POSITION_MATRIX, -0.2);
         this.bodyGreen.childs.push(this.orb); 
 
-        // --- MEMBUAT ORB 2 (Magenta, BARU) ---
+        // --- ORB 2 (Magenta) ---
         this.orb2 = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, 
             this.orbRadius, this.orbRadius, this.orbRadius, 
             20, 20, 360, ORB2_COLOR);
-        LIBS.translateX(this.orb2.POSITION_MATRIX, 0.3); // Posisi awal di sisi X positif
-        LIBS.translateY(this.orb2.POSITION_MATRIX, -0.2);  // Posisi awal di sisi Y positif
+        LIBS.translateX(this.orb2.POSITION_MATRIX, 0.3);
+        LIBS.translateY(this.orb2.POSITION_MATRIX, -0.2);
         this.bodyGreen.childs.push(this.orb2); 
         
         // Simpan objek utama (root) ke dalam array
         this.allObjects = [this.bodyGreen, this.legRoot];
     }
     
-    // Metode untuk setup semua buffer
+    // setup semua buffer
     setup() {
         this.allObjects.forEach(obj => obj.setup());
-        // Orb sudah menjadi child, jadi setup otomatis terpanggil.
     }
     
     // =======================================================
-    // --- FUNGSI ANIMASI KEDIP MATA (BARU) ---
+    // --- FUNGSI ANIMASI KEDIP MATA ---
     // =======================================================
     
     /**
@@ -503,7 +499,6 @@ export class Kirlia {
         }
 
         // Terapkan Scaling ke Mata
-        // Ini adalah lapisan putih kedua pada mata.
 
         // Mata Kiri (leftEyeB2)
         LIBS.set_I4(this.leftEyeB2.MOVE_MATRIX); // Reset MOVE_MATRIX
@@ -516,16 +511,15 @@ export class Kirlia {
     
     // =======================================================
     // --- FUNGSI ANIMASI JALAN & IDLE ---
-    // (Tidak ada perubahan signifikan di sini)
     // =======================================================
 
     applyWalkingAnimation(time) {
         const speed = 0.007; // Kecepatan ayunan
         const sinValue = Math.sin(time * speed);  
         
-        // --- ANIMASI LENGAN (Diperbaiki: Ayunan -10 ke +10) ---
+        // --- ANIMASI LENGAN (Ayunan -10 ke +10) ---
         const armMaxRot = 20; 
-        const armAmplitude = armMaxRot; // 20 derajat ayunan total, nilai sin * 20
+        const armAmplitude = armMaxRot; // 20 derajat ayunan total
         const dynamicArmRotation = sinValue * armAmplitude; 
 
         // Lengan Kiri (Ayunan X)
@@ -549,9 +543,9 @@ export class Kirlia {
         this.ArmRightTop.MOVE_MATRIX = LIBS.multiply(this.ArmRightTop.MOVE_MATRIX, r_arm_id);
         
         
-        // --- ANIMASI KAKI (Diperbaiki: Ayunan -15 ke +15, berlawanan fase dengan tangan) ---
+        // --- ANIMASI KAKI ---
         const legMaxRot = 15; 
-        const legAmplitude = legMaxRot; // 15 derajat ayunan total, nilai sin * 15
+        const legAmplitude = legMaxRot; // 15 derajat ayunan total
         
         // Ayunan Kaki: [-15, +15]
         const dynamicLegRotation = sinValue * legAmplitude;
@@ -561,8 +555,6 @@ export class Kirlia {
         LIBS.set_I4(this.legLeftTop.MOVE_MATRIX);
         LIBS.translateY(l_leg_id, -this.legLeftTopHeight / 2); // Pivot
         let l_leg_id2 = LIBS.get_I4();
-        // Kaki Kiri harus BERLAWANAN fase DENGAN LENGAN KIRI:
-        // Lengan Kiri: +sinValue (Maju) -> Kaki Kiri: -sinValue (Mundur)
         LIBS.rotateX(l_leg_id2, LIBS.degToRad(-dynamicLegRotation)); // Rotasi X (Lawan)
         l_leg_id = LIBS.multiply(l_leg_id, l_leg_id2);
         LIBS.translateY(l_leg_id, this.legLeftTopHeight / 2); // Pivot balik
@@ -573,8 +565,6 @@ export class Kirlia {
         LIBS.set_I4(this.legRightTop.MOVE_MATRIX);
         LIBS.translateY(r_leg_id, -this.legRightTopHeight / 2); // Pivot
         let r_leg_id2 = LIBS.get_I4();
-        // Kaki Kanan harus BERLAWANAN fase DENGAN LENGAN KANAN:
-        // Lengan Kanan: -sinValue (Mundur) -> Kaki Kanan: +sinValue (Maju)
         LIBS.rotateX(r_leg_id2, LIBS.degToRad(dynamicLegRotation)); // Rotasi X 
         r_leg_id = LIBS.multiply(r_leg_id, r_leg_id2);
         LIBS.translateY(r_leg_id, this.legRightTopHeight / 2); // Pivot balik
@@ -582,32 +572,23 @@ export class Kirlia {
     }
 
     resetAnimation() {
-        // Reset semua MOVE_MATRIX ke Matriks Identitas (posisi diam)
+        // Reset semua MOVE_MATRIX ke Matriks Identitas
         LIBS.set_I4(this.ArmLeftTop.MOVE_MATRIX);
         LIBS.set_I4(this.ArmRightTop.MOVE_MATRIX);
-        LIBS.set_I4(this.legLeftTop.MOVE_MATRIX); // Reset Kaki
-        LIBS.set_I4(this.legRightTop.MOVE_MATRIX); // Reset Kaki
+        LIBS.set_I4(this.legLeftTop.MOVE_MATRIX);
+        LIBS.set_I4(this.legRightTop.MOVE_MATRIX);
         
-        // Matriks Rok tidak perlu di-reset di sini karena mereka akan selalu diatur oleh logika Idle di render()
         LIBS.set_I4(this.skirtRightMiddle.MOVE_MATRIX);
         LIBS.set_I4(this.skirtRightLeft.MOVE_MATRIX);
         LIBS.set_I4(this.skirtRightRight.MOVE_MATRIX);
         LIBS.set_I4(this.skirtLeftMiddle.MOVE_MATRIX);
         LIBS.set_I4(this.skirtLeftRight.MOVE_MATRIX);
         LIBS.set_I4(this.skirtLeftLeft.MOVE_MATRIX);
-        
-        // Catatan: this.leftEyeR.MOVE_MATRIX dan this.rightEyeR.MOVE_MATRIX 
-        // akan di-reset dan di-set di applyBlinkAnimation()
     }
     
     // =======================================================
     // --- FUNGSI ANIMASI PENGENDALI ---
-    // (Tidak ada perubahan di sini)
     // =======================================================
-    
-    /**
-     * FUNGSI BARU: Memulai urutan animasi walkFront -> bowing -> walkBack.
-     */
     runAnimation() {
         if (this.currentMovementState === MOVEMENT_STATE.IDLE && this.currentRotationState === ROTATION_STATE.STATIONARY) {
             this.currentMovementState = MOVEMENT_STATE.WALK_FRONT;
@@ -665,19 +646,18 @@ export class Kirlia {
             const PI = Math.PI;
 
             if (this.currentRotationState === ROTATION_STATE.ROTATING_TO_BACK) {
-                // Rotasi 0 -> PI (0 -> 180 deg)
+                // Rotasi 0 -> 180 deg
                 this.currentRotationY = PI * progress;
                 
                 if (progress >= 1.0) {
                     this.currentRotationY = PI; // Selesaikan di 180 deg
-                    // Lanjutkan ke WALK_BACK setelah rotasi selesai
+                    // WALK_BACK setelah rotasi selesai
                     this.currentMovementState = MOVEMENT_STATE.WALK_BACK;
-                    this.movementStartTime = time; // Gunakan waktu saat ini
+                    this.movementStartTime = time;
                     this.currentRotationState = ROTATION_STATE.STATIONARY; // Rotasi selesai
                 }
             } else if (this.currentRotationState === ROTATION_STATE.ROTATING_TO_FRONT) {
-                // Rotasi PI -> 0 (180 -> 0 deg)
-                // Mulai dari PI, bergerak ke 0
+                // Rotasi 180 -> 0 deg
                 this.currentRotationY = PI * (1.0 - progress);
 
                 if (progress >= 1.0) {
@@ -710,7 +690,7 @@ export class Kirlia {
                 } else {
                     currentBowAngle = 0;
                     if (elapsedTime >= totalBowTimeNeeded) {
-                        // SEQUENCER: Setelah BOWING selesai, lakukan rotasi ke belakang (ROTATING_TO_BACK)
+                        // Setelah BOWING selesai, lakukan ROTATING_TO_BACK
                         this.currentMovementState = MOVEMENT_STATE.IDLE; // Harus IDLE agar bisa dipanggil walkBack
                         
                         // Periksa posisi Z, jika sudah di depan, mulai rotasi putar balik
@@ -769,11 +749,11 @@ export class Kirlia {
         const sinVal = Math.sin(time * this.breatheSpeed);
 
         if (!isBodyStationary) { 
-            // Gerakan Badan (Root/bodyGreen): 0.02
+            // Gerakan Badan (Root/bodyGreen)
             idleYOffset = sinVal * this.breatheBodyAmplitude;
             LIBS.translateY(idleBodyMatrix, idleYOffset);
             
-            // Gerakan Kepala (Head/this.head): 0.01 (Berlawanan arah)
+            // Gerakan Kepala (Head/this.head)
             const headYOffset = -sinVal * this.breatheHeadAmplitude;
             LIBS.translateY(idleHeadMatrix, headYOffset);
         } else {
@@ -826,13 +806,13 @@ export class Kirlia {
         // Terapkan Rotasi Y (BERPUTAR DI SUMBU Y bodyGreen)
         LIBS.rotateY(this.bodyGreen.POSITION_MATRIX, this.currentRotationY);
         LIBS.rotateX(this.bodyGreen.POSITION_MATRIX, currentBowAngle);
-        LIBS.translateY(this.bodyGreen.POSITION_MATRIX, this.bodyGreenInitialY + idleYOffset); // Idle Y di sini
+        LIBS.translateY(this.bodyGreen.POSITION_MATRIX, this.bodyGreenInitialY + idleYOffset);
 
         // B. Terapkan Rotasi Diri Sendiri (Y-Rot) pada Leg Root
         this.legRoot.POSITION_MATRIX = LIBS.get_I4();
         // Terapkan Rotasi Y (BERPUTAR DI SUMBU Y legRoot)
         LIBS.rotateY(this.legRoot.POSITION_MATRIX, this.currentRotationY);
-        LIBS.translateY(this.legRoot.POSITION_MATRIX, -0.14 + idleYOffset); // Idle Y di sini
+        LIBS.translateY(this.legRoot.POSITION_MATRIX, -0.14 + idleYOffset);
         
         // C. Terapkan Idle Movement pada Kepala (child dari Body)
         LIBS.set_I4(this.head.MOVE_MATRIX); 
@@ -840,12 +820,12 @@ export class Kirlia {
         
         // D. Terapkan Transformasi Orb 1 (Orbit & Rotasi Sumbu Sembarang)
         this.orbRotationAngle = time * 0.003; // Kecepatan rotasi orbit
-        this.orbSelfRotationAngle = time * 0.007; // Kecepatan rotasi diri sendiri (arbitrary)
+        this.orbSelfRotationAngle = time * 0.004; // Kecepatan rotasi diri sendiri (arbitrary)
         
         // --- ORB 1 (Cyan) ---
         LIBS.set_I4(this.orb.MOVE_MATRIX);
 
-        // 1. Terapkan translasi awal ke radius orbit (X)
+        // 1. Translasi awal ke radius orbit (X)
         LIBS.translateX(this.orb.MOVE_MATRIX, this.orbOrbitRadius); 
         
         // 2. Rotasi Orbit (mengelilingi sumbu Y Kirlia)
@@ -859,13 +839,13 @@ export class Kirlia {
         // Gabungkan Rotasi Arbitrary Axis ke MOVE_MATRIX Orb
         this.orb.MOVE_MATRIX = LIBS.multiply(this.orb.MOVE_MATRIX, arbitraryRotMatrix); 
         
-        // --- ORB 2 (Magenta, BARU) ---
+        // --- ORB 2 (Magenta) ---
         LIBS.set_I4(this.orb2.MOVE_MATRIX);
         
-        // 1. Terapkan translasi awal ke radius orbit (X negatif agar berlawanan)
+        // 1. Translasi awal ke radius orbit (X negatif agar berlawanan)
         LIBS.translateX(this.orb2.MOVE_MATRIX, -this.orbOrbitRadius); 
         
-        // 2. Rotasi Orbit (mengelilingi sumbu Y Kirlia). Dibuat berlawanan arah dengan Orb 1.
+        // 2. Rotasi Orbit (mengelilingi sumbu Y Kirlia)
         LIBS.rotateY(this.orb2.MOVE_MATRIX, -this.orbRotationAngle); 
         
         // 3. Rotasi Sumbu Sembarang Orb 2
