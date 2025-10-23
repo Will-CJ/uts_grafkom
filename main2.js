@@ -185,8 +185,8 @@ function main() {
     LIBS.translateX(gardevoirModelMatrix, 1.0);
     LIBS.translateY(gardevoirModelMatrix, -1.0);
     gardevoir.setGlobalRotation(
-        [1, 1, 0], 
-        [0, 3, 4] 
+        [1, -4, 0], 
+        [3, 1, 0] 
     );
     gardevoir.setup();
 

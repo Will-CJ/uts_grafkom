@@ -38,15 +38,15 @@ export class Gardevoir {
         this.isIdle = true; 
         this.idleStartTime = 0; 
         this.idleDuration = 5.0; 
-        this.moveRadius = 5.0; 
-        this.moveSpeed = LIBS.degToRad(30);
+        this.moveRadius = 2.0; 
+        this.moveSpeed = LIBS.degToRad(45);
 
         // --- State Waypoint ---
         this.idlePoints = [
             LIBS.degToRad(90),
             LIBS.degToRad(270)
         ];
-        this.currentWaypointIndex = 0; 
+        this.currentWaypointIndex = 1; 
         this.currentGlobalAngle = this.idlePoints[this.currentWaypointIndex]; 
         let nextIndex = (this.currentWaypointIndex + 1) % this.idlePoints.length;
         this.targetGlobalAngle = this.idlePoints[nextIndex];
@@ -57,11 +57,10 @@ export class Gardevoir {
         this.tempMatrix = LIBS.get_I4();
         this.setGlobalRotation(this.moveAxis, this.moveCenter);
         
-        // --- [MODIFIKASI] State Animasi Idle ---
+        // --- State Animasi Idle ---
         this.idleAnimActive = false;
         this.idleAnimScale = 0.0;
         
-        // [BARU] Definisikan posisi spawn orb
         this.idleAnimStartPos = [0.0, 0.4, 0.2]; // Posisi spawn (relatif ke body)
         this.idleAnimPos = [0, 2.7, 0]; // Selalu mulai dari sini
 
@@ -69,16 +68,27 @@ export class Gardevoir {
         this.idleAnimMoveSpeed = 7; 
         this.idleAnimGradient = VEC.normalize([0.3, -0.5, 1.0]);
 
-        // [BARU] Variabel untuk 3 Fase Animasi
+        // Variabel untuk 3 Fase Animasi
         // 0 = Tidak aktif
         // 1 = Tangan Berputar
         // 2 = Orb Scaling
         // 3 = Orb Bergerak
+        // 4 = Tangan Turun
         this.idleAnimPhase = 0;
         this.idleArmRotFactor = 0.0; // Progres rotasi tangan (0.0 - 1.0)
         this.idleArmRotDuration = 0.5; // Durasi rotasi tangan (0.3 detik)
+
+        // 0 = Tidak aktif
+        // 1 = Berputar ke 180
+        // 2 = Menahan posisi 180
+        // 3 = Berputar kembali ke 0
+        this.idle90Phase = 2;
+        this.idle90RotFactor = 0.0;      // Progres transisi (0.0 -> 1.0)
+        this.idle90RotDuration = 1.0;      // Durasi 1x putaran (detik)
+        this.idle90HoldDuration = 3.0;     // Durasi menahan (detik)
+        this.idle90HoldStartTime = 0.0;    // Timer untuk menahan
         
-        // [BARU] Simpan tinggi lengan
+        //Simpan tinggi lengan
         this.armTopHeight = 0.5; // (Diambil dari const ArmLeftTopHeight)
         
         // --- Store parameters as instance properties without redeclaring ---
@@ -750,6 +760,17 @@ export class Gardevoir {
         this.radiusVec2 = VEC.scale(v2, this.moveRadius);
     }
 
+    setNextWaypoint() {
+        this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.idlePoints.length;
+        let nextTargetAngle = this.idlePoints[this.currentWaypointIndex];
+    
+        if (nextTargetAngle <= this.currentGlobalAngle) {
+            this.targetGlobalAngle = nextTargetAngle + LIBS.degToRad(360) * Math.ceil((this.currentGlobalAngle - nextTargetAngle) / LIBS.degToRad(360));
+        } else {
+            this.targetGlobalAngle = nextTargetAngle;
+        }
+    }
+
     /**
      * Mengupdate status state, rotasi global, dan translasi karakter.
      * @param {number} dt - Delta time (waktu yang berlalu dalam detik).
@@ -773,32 +794,42 @@ export class Gardevoir {
                 if (!this.idleAnimActive) {
                     // Animasi baru saja selesai, kita boleh bergerak
                     this.isIdle = false;
-                    
-                    // Tentukan target BERIKUTNYA (ke 90)
-                    this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.idlePoints.length;
-                    let nextTargetAngle = this.idlePoints[this.currentWaypointIndex];
-                    
-                    if (nextTargetAngle <= this.currentGlobalAngle) {
-                        this.targetGlobalAngle = nextTargetAngle + LIBS.degToRad(360) * Math.ceil((this.currentGlobalAngle - nextTargetAngle) / LIBS.degToRad(360));
-                    } else {
-                        this.targetGlobalAngle = nextTargetAngle;
-                    }
+                    this.setNextWaypoint();
                 }
-            } else {
-                // --- IDLE BIASA (DI 90) ---
-                // Cek jika durasi idle selesai
-                if (this.globalTimeAcc - this.idleStartTime >= this.idleDuration) {
-                    this.isIdle = false; // Mulai bergerak
-                    
-                    // Tentukan target BERIKUTNYA (ke 270)
-                    this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.idlePoints.length;
-                    let nextTargetAngle = this.idlePoints[this.currentWaypointIndex];
-                    
-                    if (nextTargetAngle <= this.currentGlobalAngle) {
-                        this.targetGlobalAngle = nextTargetAngle + LIBS.degToRad(360) * Math.ceil((this.currentGlobalAngle - nextTargetAngle) / LIBS.degToRad(360));
-                    } else {
-                        this.targetGlobalAngle = nextTargetAngle;
-                    }
+            } else if (this.idle90Phase > 0) { // <-- [PERBAIKAN] Gunakan else if
+                // --- IDLE DENGAN PUTAR BADAN (DI 90) ---
+                this.updateIdle90Animation(dt); // Jalankan animasi putar badan
+                // (Fungsi ini akan set isIdle = false dan panggil setNextWaypoint() saat selesai)
+            } else{
+                // --- KITA IDLE, TAPI TIDAK ADA ANIMASI YANG AKTIF ---
+                // Ini hanya terjadi jika kita berhenti di waypoint
+                // yang tidak memiliki trigger (misal 90 jika trigger 90-nya dihapus)
+                // atau di frame pertama saat spawn.
+                
+                // Cek timer idle standar (jika ada)
+                // (Untuk animasi 90, kita ingin timernya dikontrol oleh updateIdle90Animation)
+                // Jadi, kita perlu pastikan trigger 90-nya sudah jalan.
+                // Kita cek di sini untuk amannya:
+                
+                const angle270 = LIBS.degToRad(270);
+                const epsilon = 0.001; 
+                const wrappedAngle = this.currentGlobalAngle % LIBS.degToRad(360);
+
+                if (Math.abs(wrappedAngle - angle270) < epsilon && this.idle90Phase === 0) {
+                        // Kita idle di 90, tapi animasi 90 belum mulai
+                        this.idle90Phase = 1;
+                        this.idle90RotFactor = 0.0; 
+                }
+                
+                // Jika kita idle di 270 tapi anim 270 belum mulai
+                // (Seharusnya tidak terjadi karena trigger di bawah, tapi untuk keamanan)
+                const angle90 = LIBS.degToRad(90);
+                if (Math.abs(wrappedAngle - angle90) < epsilon && !this.idleAnimActive) {
+                    this.idleAnimActive = true;
+                    this.idleAnimPhase = 1; 
+                    this.idleArmRotFactor = 0.0;
+                    this.idleAnimScale = 0.0; 
+                    this.idleAnimPos = [...this.idleAnimStartPos]; // <-- Perbaikan dari kode Anda
                 }
             }
         } else { 
@@ -815,12 +846,12 @@ export class Gardevoir {
                 this.isIdle = true; 
                 this.idleStartTime = this.globalTimeAcc; 
                 
-                const angle270 = LIBS.degToRad(270);
+                const angle90 = LIBS.degToRad(90);
                 const epsilon = 0.001; 
                 const wrappedAngle = this.currentGlobalAngle % LIBS.degToRad(360);
     
                 // [MODIFIKASI TRIGGER]
-                if (Math.abs(wrappedAngle - angle270) < epsilon) {
+                if (Math.abs(wrappedAngle - angle90) < epsilon) {
                     if (!this.idleAnimActive) {
                         this.idleAnimActive = true;
                         
@@ -1013,12 +1044,64 @@ export class Gardevoir {
         }
     }
 
+    updateIdle90Animation(dt) {
+        let currentBodyAngle = 0; // Sudut Y lokal (derajat)
+    
+        // --- FASE 1: Berputar ke 180 ---
+        if (this.idle90Phase === 1) {
+            this.idle90RotFactor += (dt / this.idle90RotDuration);
+            
+            // [PERBAIKAN BUG] Gunakan 'idle90RotFactor' bukan 'idleArmRotFactor'
+            if (this.idle90RotFactor >= 1.0) { 
+                this.idle90RotFactor = 1.0;
+                this.idle90Phase = 2; // Lanjut ke Fase 2 (Tahan)
+                this.idle90HoldStartTime = this.globalTimeAcc; // Mulai timer tahan
+            }
+            currentBodyAngle = this.idle90RotFactor * 180.0; // Interpolasi 0 -> 180
+        }
+        // --- FASE 2: Menahan di 180 ---
+        else if (this.idle90Phase === 2) {
+            currentBodyAngle = 180.0; // Tahan di 180
+            
+            // Cek jika durasi tahan selesai
+            if (this.globalTimeAcc - this.idle90HoldStartTime >= this.idle90HoldDuration) {
+                this.idle90Phase = 3; // Lanjut ke Fase 3 (Putar Balik)
+                this.idle90RotFactor = 1.0; // Set faktor ke 1.0 untuk hitungan mundur
+            }
+        }
+        // --- FASE 3: Berputar kembali ke 0 ---
+        else if (this.idle90Phase === 3) {
+            this.idle90RotFactor -= (dt / this.idle90RotDuration); // Hitung mundur 1.0 -> 0.0
+            
+            if (this.idle90RotFactor <= 0.0) {
+                // --- ANIMASI SELESAI ---
+                this.idle90RotFactor = 0.0;
+                this.idle90Phase = 0; // Set tidak aktif
+                this.isIdle = false;  // Izinkan Gardevoir bergerak lagi
+                
+                // Tentukan target waypoint berikutnya
+                this.setNextWaypoint(); 
+                
+                currentBodyAngle = 0.0; // Pastikan kembali ke 0
+            } else {
+                // Interpolasi 180 -> 0
+                currentBodyAngle = this.idle90RotFactor * 180.0;
+            }
+        }
+    
+        // --- Tulis Matriks Badan ---
+        // Kita SET (timpa) MOVE_MATRIX milik body
+        LIBS.set_I4(this.body.MOVE_MATRIX);
+        LIBS.rotateY(this.body.MOVE_MATRIX, LIBS.degToRad(currentBodyAngle));
+    }
     /**
      * Metode untuk merender semua objek. Ini yang dipanggil dari main.js.
      * @param {array} parentMatrix - Matriks global yang masuk (rotasi mouse * posisi global).
      */
     render(parentMatrix, currentTime) {
-        if (!this.idleAnimActive) {
+        if (!this.idleAnimActive && this.idle90Phase === 0) {
+            // Hanya jalankan animasi jalan jika TIDAK sedang spell
+            // DAN TIDAK sedang putar badan
             this.applyWalkingAnimation(currentTime, this.transitionFactor);
         }
         
