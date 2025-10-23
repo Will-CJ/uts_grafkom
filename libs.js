@@ -121,4 +121,34 @@ var LIBS = {
     scale: function (m, x, y, z) {
         m[0] *= x; m[5] *= y; m[10] *= z;
     },
+
+    /**
+     * Menerapkan Rotasi di sekitar Sumbu Sembarang V=(x, y, z) pada Matriks M.
+     * @param {Array<number>} M - Matriks 4x4 untuk diterapkan (Matriks Tujuan).
+     * @param {number} angle - Sudut rotasi (dalam radian).
+     * @param {number} x - Komponen X dari sumbu rotasi (satuan).
+     * @param {number} y - Komponen Y dari sumbu rotasi (satuan).
+     * @param {number} z - Komponen Z dari sumbu rotasi (satuan).
+     */
+    rotateArbitraryAxis: function (M, angle, x, y, z) {
+        var c = Math.cos(angle);
+        var s = Math.sin(angle);
+        var C = 1.0 - c;
+
+        // Matriks rotasi R di sekitar sumbu sembarang [x, y, z] (Rumus Rodrigues)
+        var R = [
+            x * x * C + c,      x * y * C - z * s,    x * z * C + y * s,    0,
+            y * x * C + z * s,  y * y * C + c,        y * z * C - x * s,    0,
+            z * x * C - y * s,  z * y * C + x * s,    z * z * C + c,        0,
+            0,                  0,                    0,                    1
+        ];
+        
+        // M = R * M (Rotasi diterapkan ke matriks M)
+        var temp = this.multiply(R, M);
+        
+        // Salin hasil kembali ke M
+        for (var i = 0; i < 16; i++) {
+            M[i] = temp[i];
+        }
+    }
 };
