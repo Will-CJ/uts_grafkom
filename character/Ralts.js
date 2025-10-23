@@ -5,6 +5,14 @@ import { BSplineExtruded } from "../object/BSplineExtruded.js";
 // Buat kelas untuk Pokémon Ralts
 export class Ralts {
     constructor(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal) {
+        // --- Menyimpan parameter GL (PENTING untuk mencegah error setup) ---
+        this.GL = GL;
+        this.SHADER_PROGRAM = SHADER_PROGRAM;
+        this._position = _position;
+        this._Mmatrix = _Mmatrix;
+        this._normal = _normal
+        const GL_PARAMS = [this.GL, this.SHADER_PROGRAM, this._position, this._Mmatrix];
+        
         // Mendefinisikan warna-warna yang digunakan
         const WHITE = [1.0, 1.0, 1.0];
         const LIGHT_PASTEL_GREEN = [0.733, 0.984, 0.741];
@@ -23,7 +31,7 @@ export class Ralts {
         const headGreenRadius = 0.16;
         const headGreen = new Ellipsoid(
             GL, SHADER_PROGRAM, _position, _Mmatrix, _normal,
-            0.18, headGreenRadius, headGreenRadius,
+            0.21, headGreenRadius, headGreenRadius,
             30, 30, 180, LIGHT_PASTEL_GREEN
         );
         LIBS.translateY(headGreen.POSITION_MATRIX, 0.06);
@@ -32,10 +40,10 @@ export class Ralts {
         this.body.childs.push(headGreen);
 
         // Kepala Putih (Ellipsoid)
-        const headWhiteRadius = 0.13;
-        const headWhite = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, headWhiteRadius, headWhiteRadius, headWhiteRadius, 30, 30, 360, WHITE);
-        LIBS.translateY(headWhite.POSITION_MATRIX, 0.1);
-        this.body.childs.push(headWhite);
+        const headWhiteRadius = 0.14;
+        this.head = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, headWhiteRadius, headWhiteRadius, headWhiteRadius, 30, 30, 360, WHITE);
+        LIBS.translateY(this.head.POSITION_MATRIX, 0.1);
+        this.body.childs.push(this.head);
 
         // Motif Merah (Kurva)
         // Gunakan ExtrudedShape untuk membuat tanduk merah.
@@ -69,7 +77,7 @@ export class Ralts {
         // Tangan Kiri
         const ArmLeftBottomRadius = 0.1;
         const ArmLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, ArmLeftBottomRadius-0.075, ArmLeftBottomRadius+0.01, ArmLeftBottomRadius-0.075, 30, 30, 360,WHITE);
-        LIBS.translateY(ArmLeftBottom.POSITION_MATRIX, -0.08);
+        LIBS.translateY(ArmLeftBottom.POSITION_MATRIX, -0.13);
         LIBS.translateX(ArmLeftBottom.POSITION_MATRIX, 0.1);
         LIBS.rotateZ(ArmLeftBottom.POSITION_MATRIX, Math.PI/2);
         this.body.childs.push(ArmLeftBottom);
@@ -77,7 +85,7 @@ export class Ralts {
         // Tangan Kanan
         const ArmRightBottomRadius = 0.1;
         const ArmRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, ArmRightBottomRadius-0.075, ArmRightBottomRadius+0.01, ArmRightBottomRadius-0.075, 30, 30, 360, WHITE);
-        LIBS.translateY(ArmRightBottom.POSITION_MATRIX, -0.08);
+        LIBS.translateY(ArmRightBottom.POSITION_MATRIX, -0.13);
         LIBS.translateX(ArmRightBottom.POSITION_MATRIX, -0.1);
         LIBS.rotateZ(ArmRightBottom.POSITION_MATRIX, -Math.PI/2);
         this.body.childs.push(ArmRightBottom);
