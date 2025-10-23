@@ -15,6 +15,13 @@ const MOVEMENT_STATE = {
     BOWING: 3 // State untuk Bowing
 };
 
+// Definisikan state untuk rotasi putar balik
+const ROTATION_STATE = {
+    STATIONARY: 0,
+    ROTATING_TO_BACK: 1, // Rotasi 0 -> 180 (Saat mau walk back)
+    ROTATING_TO_FRONT: 2 // Rotasi 180 -> 0 (Saat selesai walk back)
+};
+
 // Buat kelas untuk Pokémon Kirlia
 export class Kirlia {
     constructor(GL, SHADER_PROGRAM, _position, _Mmatrix) {
@@ -45,12 +52,19 @@ export class Kirlia {
         this.targetZ = 3.0; // Jarak translasi Z
         this.currentZ = 0.0; // Posisi Z saat ini
         
+        // --- Animation State Variables (Rotation BARU) ---
+        this.currentRotationState = ROTATION_STATE.STATIONARY;
+        this.rotationStartTime = 0;
+        this.rotationDuration = 1000; // 1 detik untuk rotasi 180 derajat
+        this.currentRotationY = 0; // Rotasi Y saat ini (radian)
+
+
         // --- Breathing/Idle Movement Variables (BARU) ---
         this.breatheBodyAmplitude = 0.02; // Naik-turun badan (0.02)
         this.breatheHeadAmplitude = 0.01; // Naik-turun kepala (0.01)
         this.breatheSpeed = 0.005; // Kecepatan bernafas (sama untuk semua)
 
-        // --- Membuat semua bagian tubuh Kirlia... ---
+        // --- Membuat semua bagian tubuh Kirlia... (Bagian ini tidak berubah) ---
         const bodyGreenRadius = 0.1;
         this.bodyGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, bodyGreenRadius-0.01, bodyGreenRadius-0.03, bodyGreenRadius-0.01, 30, 30, 360, LIGHT_PASTEL_GREEN);
         
@@ -153,18 +167,18 @@ export class Kirlia {
         //Rambut depan (Crescent)
         this.frontHair = new Crescent(
             ...GL_PARAMS,
-            0.15,  // majorRadius (7)
+            0.15,  // majorRadius (7)
             0.17, // minorRadius (8) - Dibuat positif untuk lekukan normal
             90, // startAngDeg (9)
             270, // endAngDeg (10)
-            32,  // majorSegments (11)
+            32,  // majorSegments (11)
             32, // minorSegments (12)
-            LIGHT_PASTEL_GREEN  // color (13)
+            LIGHT_PASTEL_GREEN  // color (13)
         );
         LIBS.translateZ(this.frontHair.POSITION_MATRIX, 0.06)
         LIBS.translateY(this.frontHair.POSITION_MATRIX, -0.12)
         LIBS.rotateZ(this.frontHair.POSITION_MATRIX, LIBS.degToRad(-90))
-        this.head.childs.push(this.frontHair)               
+        this.head.childs.push(this.frontHair)              
         
         const headGreen3Radius = 0.2;
         const headGreen3 = new Ellipsoid(
@@ -356,7 +370,7 @@ export class Kirlia {
         ];
         const headHornLeft = new BSplineExtruded(
             GL, SHADER_PROGRAM, _position, _Mmatrix,
-            custom_controlPoints, 0.01, 30,  LIGHT_PINK
+            custom_controlPoints, 0.01, 30, LIGHT_PINK
         );
         LIBS.translateY(headHornLeft.POSITION_MATRIX, 0.4);
         LIBS.translateX(headHornLeft.POSITION_MATRIX, -0.15);
@@ -391,7 +405,7 @@ export class Kirlia {
 
     applyWalkingAnimation(time) {
         const speed = 0.007; // Kecepatan ayunan
-        const sinValue = Math.sin(time * speed);  
+        const sinValue = Math.sin(time * speed);  
         
         // --- ANIMASI LENGAN (Diperbaiki: Ayunan -10 ke +10) ---
         const armMaxRot = 20; 
@@ -475,7 +489,7 @@ export class Kirlia {
      * FUNGSI BARU: Memulai urutan animasi walkFront -> bowing -> walkBack.
      */
     runAnimation() {
-        if (this.currentMovementState === MOVEMENT_STATE.IDLE) {
+        if (this.currentMovementState === MOVEMENT_STATE.IDLE && this.currentRotationState === ROTATION_STATE.STATIONARY) {
             this.currentMovementState = MOVEMENT_STATE.WALK_FRONT;
             this.movementStartTime = performance.now();
         }
@@ -500,8 +514,10 @@ export class Kirlia {
     walkBack() {
         // Hanya bisa dipanggil jika IDLE DAN sudah di posisi depan
         if (this.currentMovementState === MOVEMENT_STATE.IDLE && this.currentZ === this.targetZ) {
-            this.currentMovementState = MOVEMENT_STATE.WALK_BACK;
-            this.movementStartTime = performance.now();
+            // Ubah ke state rotasi dulu, bukan langsung WALK_BACK
+            this.currentRotationState = ROTATION_STATE.ROTATING_TO_BACK;
+            this.rotationStartTime = performance.now();
+            // Tidak perlu update movementState sampai rotasi selesai
         }
     }
 
@@ -518,13 +534,45 @@ export class Kirlia {
         // Flag untuk mengontrol animasi lengan/kaki
         let shouldAnimateLimbs = false;
 
-        // --- 1. Update Logika Pergerakan/Bowing berdasarkan State Machine ---
+        // --- 1. Update Logika Rotasi (BARU) ---
+        if (this.currentRotationState !== ROTATION_STATE.STATIONARY) {
+            const rotElapsedTime = time - this.rotationStartTime;
+            let progress = Math.min(rotElapsedTime / this.rotationDuration, 1.0);
+            
+            const PI = Math.PI;
+
+            if (this.currentRotationState === ROTATION_STATE.ROTATING_TO_BACK) {
+                // Rotasi 0 -> PI (0 -> 180 deg)
+                this.currentRotationY = PI * progress;
+                
+                if (progress >= 1.0) {
+                    this.currentRotationY = PI; // Selesaikan di 180 deg
+                    // Lanjutkan ke WALK_BACK setelah rotasi selesai
+                    this.currentMovementState = MOVEMENT_STATE.WALK_BACK;
+                    this.movementStartTime = time; // Gunakan waktu saat ini
+                    this.currentRotationState = ROTATION_STATE.STATIONARY; // Rotasi selesai
+                }
+            } else if (this.currentRotationState === ROTATION_STATE.ROTATING_TO_FRONT) {
+                // Rotasi PI -> 0 (180 -> 0 deg)
+                // Mulai dari PI, bergerak ke 0
+                this.currentRotationY = PI * (1.0 - progress);
+
+                if (progress >= 1.0) {
+                    this.currentRotationY = 0; // Selesaikan di 0 deg
+                    // Lanjutkan ke IDLE setelah rotasi selesai
+                    this.currentMovementState = MOVEMENT_STATE.IDLE;
+                    this.currentRotationState = ROTATION_STATE.STATIONARY; // Rotasi selesai
+                }
+            }
+        }
+        
+        // --- 2. Update Logika Pergerakan/Bowing berdasarkan State Machine ---
         if (this.currentMovementState !== MOVEMENT_STATE.IDLE) {
             const elapsedTime = time - this.movementStartTime;
             const walkDuration = this.movementDuration; // Waktu animasi berjalan sebenarnya
             
             const totalWalkTimeNeeded = walkDuration + this.delayDuration; 
-            const totalBowTimeNeeded = this.bowDuration + this.delayDuration;       
+            const totalBowTimeNeeded = this.bowDuration + this.delayDuration; 
             
             if (this.currentMovementState === MOVEMENT_STATE.BOWING) {
                 const bowElapsedTime = Math.min(elapsedTime, this.bowDuration);
@@ -539,8 +587,14 @@ export class Kirlia {
                 } else {
                     currentBowAngle = 0;
                     if (elapsedTime >= totalBowTimeNeeded) {
-                        this.currentMovementState = MOVEMENT_STATE.WALK_BACK;
-                        this.movementStartTime = performance.now(); 
+                        // SEQUENCER: Setelah BOWING selesai, lakukan rotasi ke belakang (ROTATING_TO_BACK)
+                        this.currentMovementState = MOVEMENT_STATE.IDLE; // Harus IDLE agar bisa dipanggil walkBack
+                        
+                        // Periksa posisi Z, jika sudah di depan, mulai rotasi putar balik
+                        if (this.currentZ === this.targetZ) {
+                            this.currentRotationState = ROTATION_STATE.ROTATING_TO_BACK;
+                            this.rotationStartTime = time; 
+                        }
                     }
                 }
             } else { // WALK_FRONT atau WALK_BACK
@@ -563,47 +617,60 @@ export class Kirlia {
                     
                     if (elapsedTime >= totalWalkTimeNeeded) {
                         if (this.currentMovementState === MOVEMENT_STATE.WALK_FRONT) {
+                            // Selesai WALK_FRONT, Lanjut ke BOWING
                             this.currentMovementState = MOVEMENT_STATE.BOWING;
-                            this.movementStartTime = performance.now(); 
+                            this.movementStartTime = time; 
                         } else if (this.currentMovementState === MOVEMENT_STATE.WALK_BACK) {
-                            this.currentMovementState = MOVEMENT_STATE.IDLE;
+                            // Selesai WALK_BACK (sudah kembali), Lanjut ke ROTATING_TO_FRONT
+                            this.currentMovementState = MOVEMENT_STATE.IDLE; // Diperlakukan IDLE untuk transisi rotasi
+                            this.currentRotationState = ROTATION_STATE.ROTATING_TO_FRONT;
+                            this.rotationStartTime = time;
                         }
                     }
                 }
             }
-        } 
+        }
         
         this.currentZ = targetZ; // Update posisi Z
         
-        // --- 2. Idle/Breathing Movement Logic ---
+        // --- 3. Idle/Breathing Movement Logic ---
         let idleYOffset = 0.0;
         let idleBodyMatrix = LIBS.get_I4();
         let idleHeadMatrix = LIBS.get_I4();
         let skirtRotAngle = 0; // Rotasi rok
         
         const isIdleOrBowing = (this.currentMovementState === MOVEMENT_STATE.IDLE || this.currentMovementState === MOVEMENT_STATE.BOWING);
-        const isSkirtMoving = isIdleOrBowing || (this.currentMovementState === MOVEMENT_STATE.WALK_FRONT || this.currentMovementState === MOVEMENT_STATE.WALK_BACK);
+        // Animasi idle/breathing/skirt hanya dimatikan saat rotasi penuh sedang berlangsung, atau saat walk.
+        const isBodyStationary = this.currentRotationState !== ROTATION_STATE.STATIONARY || shouldAnimateLimbs;
+
 
         // Hitung nilai sin untuk Idle/Breathing
         const sinVal = Math.sin(time * this.breatheSpeed);
 
-        if (!shouldAnimateLimbs) { 
-             // Gerakan Badan (Root/bodyGreen): 0.02
+        if (!isBodyStationary) { 
+            // Gerakan Badan (Root/bodyGreen): 0.02
             idleYOffset = sinVal * this.breatheBodyAmplitude;
             LIBS.translateY(idleBodyMatrix, idleYOffset);
             
             // Gerakan Kepala (Head/this.head): 0.01 (Berlawanan arah)
             const headYOffset = -sinVal * this.breatheHeadAmplitude;
             LIBS.translateY(idleHeadMatrix, headYOffset);
+        } else {
+             // Pastikan posisi Y idle tetap 0 saat walk/rotasi
+             LIBS.translateY(idleBodyMatrix, 0); 
+             LIBS.translateY(idleHeadMatrix, 0); 
         }
-        
-        // Rotasi Rok (2 derajat) - Diaktifkan selalu
-        if (isSkirtMoving) {
-            skirtRotAngle = LIBS.degToRad(-2 * sinVal); // -2 derajat max saat badan naik.
+
+        // Rotasi Rok (2 derajat) - Diaktifkan selalu kecuali saat Rotasi Penuh
+        if (!shouldAnimateLimbs && this.currentRotationState === ROTATION_STATE.STATIONARY) { 
+             skirtRotAngle = LIBS.degToRad(-2 * sinVal); // -2 derajat max saat badan naik.
+        } else if (shouldAnimateLimbs) {
+             // Selama berjalan, goyangan rok lebih cepat.
+             skirtRotAngle = LIBS.degToRad(3 * Math.sin(time * 0.02)); 
         }
 
 
-        // --- 3. Animasi Tangan dan Kaki ---
+        // --- 4. Animasi Tangan dan Kaki ---
         if (shouldAnimateLimbs) {
             this.applyWalkingAnimation(time);
         } else {
@@ -611,39 +678,48 @@ export class Kirlia {
         }
         
         // Terapkan Rotasi/Goyangan Rok
-        if (isSkirtMoving) {
-            const skirtObjects = [
-                this.skirtRightMiddle, this.skirtRightLeft, this.skirtRightRight, 
-                this.skirtLeftMiddle, this.skirtLeftRight, this.skirtLeftLeft
-            ];
-            
-            skirtObjects.forEach(skirt => {
-                LIBS.set_I4(skirt.MOVE_MATRIX);
-                LIBS.rotateX(skirt.MOVE_MATRIX, skirtRotAngle);
-            });
-        }
+        const skirtObjects = [
+            this.skirtRightMiddle, this.skirtRightLeft, this.skirtRightRight, 
+            this.skirtLeftMiddle, this.skirtLeftRight, this.skirtLeftLeft
+        ];
+        
+        skirtObjects.forEach(skirt => {
+            LIBS.set_I4(skirt.MOVE_MATRIX);
+            LIBS.rotateX(skirt.MOVE_MATRIX, skirtRotAngle);
+        });
 
 
-        // --- 4. Gabungkan Global Transform (Z-Move + Idle/Breathing pada Root) ---
+        // --- 5. Gabungkan Global Transform (Hanya Z-Move) ---
+        // Rotasi Y dikeluarkan dari sini agar tidak memutar sumbu Z global.
         let globalTransformMatrix = LIBS.get_I4();
+        
+        // Terapkan Pergerakan Z (Global/Posisi Awal Objek)
         LIBS.translateZ(globalTransformMatrix, this.currentZ);
-        globalTransformMatrix = LIBS.multiply(globalTransformMatrix, idleBodyMatrix);
+        
         const combinedMatrix = LIBS.multiply(parentMatrix, globalTransformMatrix);
 
 
-        // --- 5. Terapkan Transformasi Sub-Root dan Render ---
+        // --- 6. Terapkan Transformasi Sub-Root dan Render ---
         
-        // A. Terapkan Rotasi Bowing pada Body Green (Sub-root utama)
+        // A. Terapkan Rotasi Diri Sendiri (Y-Rot) dan Rotasi Bowing pada Body Green
         this.bodyGreen.POSITION_MATRIX = LIBS.get_I4();
+        // Terapkan Rotasi Y (BERPUTAR DI SUMBU Y bodyGreen)
+        LIBS.rotateY(this.bodyGreen.POSITION_MATRIX, this.currentRotationY);
         LIBS.rotateX(this.bodyGreen.POSITION_MATRIX, currentBowAngle);
         LIBS.translateY(this.bodyGreen.POSITION_MATRIX, this.bodyGreenInitialY); 
+
+        // B. Terapkan Rotasi Diri Sendiri (Y-Rot) pada Leg Root
+        this.legRoot.POSITION_MATRIX = LIBS.get_I4();
+        // Terapkan Rotasi Y (BERPUTAR DI SUMBU Y legRoot)
+        LIBS.rotateY(this.legRoot.POSITION_MATRIX, this.currentRotationY);
+        LIBS.translateY(this.legRoot.POSITION_MATRIX, -0.14); // Leg root initial Y position
         
-        // B. Terapkan Idle Movement pada Kepala (child dari Body)
+        // C. Terapkan Idle Movement pada Kepala (child dari Body)
         LIBS.set_I4(this.head.MOVE_MATRIX); 
         this.head.MOVE_MATRIX = LIBS.multiply(this.head.MOVE_MATRIX, idleHeadMatrix);
 
 
-        // Render DUA root (bodyGreen dan legRoot)
+        // Render DUA root (bodyGreen dan legRoot) menggunakan combinedMatrix (hanya berisi Z-move)
         this.allObjects.forEach(obj => obj.render(combinedMatrix));
     }
 }
