@@ -6,6 +6,9 @@ export class Trapezoid {
     _normal = null;          // <-- TAMBAHKAN
     OBJECT_VERTEX = null;    // Buffer Posisi
     OBJECT_NORMALS = null;   // <-- Buffer Normal BARU
+    _normal = null;          // <-- TAMBAHKAN
+    OBJECT_VERTEX = null;    // Buffer Posisi
+    OBJECT_NORMALS = null;   // <-- Buffer Normal BARU
     OBJECT_FACES = null;
     vertices = [];           // Array Posisi (Struktur Lama Anda)
     normals = [];            // <-- Array Normal BARU (Paralel)

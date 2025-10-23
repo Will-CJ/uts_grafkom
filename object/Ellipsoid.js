@@ -74,6 +74,7 @@ export class Ellipsoid {
             for (let j = 0; j < uSegments; j++) {
                 let p1 = i * (uSegments + 1) + j;
                 let p2 = p1 + (uSegments + 1);
+                // Waspada: Indexing asli ini mungkin salah
                 this.faces.push(p1, p2, p1 + 1);
                 this.faces.push(p1 + 1, p2, p2 + 1);
             }
@@ -101,6 +102,8 @@ export class Ellipsoid {
                 this.faces.push(p1, i * (uSegments + 1) + uSegments, (i + 1) * (uSegments + 1) + uSegments);
                 this.faces.push(p1, (i + 1) * (uSegments + 1) + uSegments, i * (uSegments + 1) + uSegments);
             }
+            // CATATAN: Kode tutup asli tidak menambahkan vertex tengah atau normal spesifik
+            // Jadi kita tidak perlu menambahkan normal tambahan di sini.
         }
 
         this.numIndices = this.faces.length;
