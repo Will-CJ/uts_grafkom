@@ -17,13 +17,14 @@ const MOVEMENT_STATE = {
 };
 
 export class Ralts {
-    constructor(GL, SHADER_PROGRAM, _position, _Mmatrix) {
+    constructor(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal) {
         // --- Setup GL dan Parameter Dasar ---
         this.GL = GL;
         this.SHADER_PROGRAM = SHADER_PROGRAM;
         this._position = _position;
         this._Mmatrix = _Mmatrix;
-        const GL_PARAMS = [this.GL, this.SHADER_PROGRAM, this._position, this._Mmatrix];
+        this._normal = _normal
+        const GL_PARAMS = [this.GL, this.SHADER_PROGRAM, this._position, this._Mmatrix, _normal];
         
         // --- Definisi Warna ---
         const WHITE = [1.0, 1.0, 1.0];
@@ -66,12 +67,12 @@ export class Ralts {
         // --- Model Parts Setup (Tidak Berubah) ---
         const bodyRadius = 0.032;
         const bodyHeight = 0.35;
-        this.body = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, bodyRadius, bodyHeight, 30, WHITE);
+        this.body = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, bodyRadius, bodyHeight, 30, WHITE);
 
         // ... (Kode model Ralts, dihilangkan untuk fokus pada Orb) ...
         const headGreenRadius = 0.18;
         const headGreen = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _Mmatrix,
+            GL, SHADER_PROGRAM, _position, _Mmatrix, _normal,
             0.21, headGreenRadius, headGreenRadius,
             30, 30, 180, LIGHT_PASTEL_GREEN
         );
@@ -81,7 +82,7 @@ export class Ralts {
         this.body.childs.push(headGreen);
 
         const headWhiteRadius = 0.14;
-        this.head = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headWhiteRadius, headWhiteRadius, headWhiteRadius, 30, 30, 360, WHITE);
+        this.head = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, headWhiteRadius, headWhiteRadius, headWhiteRadius, 30, 30, 360, WHITE);
         LIBS.translateY(this.head.POSITION_MATRIX, 0.1);
         this.body.childs.push(this.head);
 
@@ -92,7 +93,7 @@ export class Ralts {
             [0.0, -0.2]
         ];
         const headHornFront = new BSplineExtruded(
-            GL, SHADER_PROGRAM, _position, _Mmatrix,
+            GL, SHADER_PROGRAM, _position, _Mmatrix, _normal,
             redHornControlPoints, 0.01, 30, LIGHT_PINK
         );
         LIBS.translateY(headHornFront.POSITION_MATRIX, 0.2);
@@ -102,7 +103,7 @@ export class Ralts {
         this.body.childs.push(headHornFront);
         
         const redHornBack = new BSplineExtruded(
-            GL, SHADER_PROGRAM, _position, _Mmatrix,
+            GL, SHADER_PROGRAM, _position, _Mmatrix, _normal,
             redHornControlPoints, 0.01, 30, LIGHT_PINK
         );
         LIBS.translateY(redHornBack.POSITION_MATRIX, 0.23);
@@ -114,7 +115,7 @@ export class Ralts {
         // Lengan Kiri (Root untuk Animasi)
         const ArmLeftTopRadius = 0.025;
         const ArmLeftTopHeight = 0.15;
-        this.ArmLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftTopRadius, ArmLeftTopHeight, 30, WHITE);
+        this.ArmLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, ArmLeftTopRadius, ArmLeftTopHeight, 30, WHITE);
         this.ArmLeftTopHeight = ArmLeftTopHeight; // Tinggi untuk pivot
         LIBS.translateY(this.ArmLeftTop.POSITION_MATRIX, -0.09);
         LIBS.translateX(this.ArmLeftTop.POSITION_MATRIX, 0.08);
@@ -122,14 +123,14 @@ export class Ralts {
         this.body.childs.push(this.ArmLeftTop);
         
         const ArmLeftBottomRadius = 0.025;
-        const ArmLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftBottomRadius, ArmLeftBottomRadius, ArmLeftBottomRadius, 30, 30, 360, WHITE);
+        const ArmLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, ArmLeftBottomRadius, ArmLeftBottomRadius, ArmLeftBottomRadius, 30, 30, 360, WHITE);
         LIBS.translateY(ArmLeftBottom.POSITION_MATRIX, -0.08);
         this.ArmLeftTop.childs.push(ArmLeftBottom);
         
         // Lengan Kanan (Root untuk Animasi)
         const ArmRightTopRadius = 0.025;
         const ArmRightTopHeight = 0.2;
-        this.ArmRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightTopRadius, ArmRightTopHeight, 30, WHITE);
+        this.ArmRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, ArmRightTopRadius, ArmRightTopHeight, 30, WHITE);
         this.ArmRightTopHeight = ArmRightTopHeight; // Tinggi untuk pivot
         LIBS.translateY(this.ArmRightTop.POSITION_MATRIX, -0.09);
         LIBS.translateX(this.ArmRightTop.POSITION_MATRIX, -0.08);
@@ -137,7 +138,7 @@ export class Ralts {
         this.body.childs.push(this.ArmRightTop);
         
         const ArmRightBottomRadius = 0.025;
-        const ArmRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightBottomRadius, ArmRightBottomRadius, ArmRightBottomRadius, 30, 30, 360, WHITE);
+        const ArmRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, ArmRightBottomRadius, ArmRightBottomRadius, ArmRightBottomRadius, 30, 30, 360, WHITE);
         LIBS.translateY(ArmRightBottom.POSITION_MATRIX, -0.1);
         this.ArmRightTop.childs.push(ArmRightBottom);
 
@@ -145,7 +146,7 @@ export class Ralts {
         // Kaki Kiri (Root untuk Animasi)
         const leftLegRadius = 0.11;
         const leftLegHeight = 0.28;
-        this.leftLeg = new Cone(GL, SHADER_PROGRAM, _position, _Mmatrix, leftLegRadius-0.05, 0, 360, 0, 0, leftLegHeight-0.01, 30, WHITE);
+        this.leftLeg = new Cone(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, leftLegRadius-0.05, 0, 360, 0, 0, leftLegHeight-0.01, 30, WHITE);
         this.leftLegHeight = leftLegHeight - 0.01; // Tinggi untuk pivot
         LIBS.translateY(this.leftLeg.POSITION_MATRIX, -0.2);
         LIBS.translateX(this.leftLeg.POSITION_MATRIX, -0.02);
@@ -155,7 +156,7 @@ export class Ralts {
         // Kaki Kanan (Root untuk Animasi)
         const rightLegRadius = 0.1;
         const rightLegHeight = 0.28;
-        this.rightLeg = new Cone(GL, SHADER_PROGRAM, _position, _Mmatrix, rightLegRadius-0.05, 0, 360, 0, 0, rightLegHeight-0.01, 30, WHITE);
+        this.rightLeg = new Cone(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, rightLegRadius-0.05, 0, 360, 0, 0, rightLegHeight-0.01, 30, WHITE);
         this.rightLegHeight = rightLegHeight - 0.01; // Tinggi untuk pivot
         LIBS.translateY(this.rightLeg.POSITION_MATRIX, -0.2);
         LIBS.translateX(this.rightLeg.POSITION_MATRIX, 0.02);

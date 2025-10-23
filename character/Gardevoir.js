@@ -89,7 +89,7 @@ export class Gardevoir {
         this._normal = _normal;
         // --- Store common parameters in an array for cleaner calls ---
         // GL_PARAMS: [GL, SHADER_PROGRAM, _position, _normal, _Mmatrix]
-        const GL_PARAMS = [this.GL, this.SHADER_PROGRAM, this._position, this._Mmatrix];
+        const GL_PARAMS = [this.GL, this.SHADER_PROGRAM, this._position, this._Mmatrix, this._normal];
 
         //Badan
         this.body = new BezierSOR(
@@ -108,7 +108,7 @@ export class Gardevoir {
         ];
 
         // Buat objek 3D dengan kedalaman 0.2
-        this.pinkBlade = new BSplineExtruded(GL, SHADER_PROGRAM, _position, _Mmatrix, bladeControlPoints, 0.05, 30, RED);
+        this.pinkBlade = new BSplineExtruded(...GL_PARAMS, bladeControlPoints, 0.05, 30, RED);
         LIBS.scale(this.pinkBlade.POSITION_MATRIX, 0.3, 0.3, 0.35)
         LIBS.rotateY(this.pinkBlade.MOVE_MATRIX, LIBS.degToRad(-90))
         LIBS.rotateX(this.pinkBlade.MOVE_MATRIX, LIBS.degToRad(-90))
@@ -117,14 +117,14 @@ export class Gardevoir {
         this.body.childs.push(this.pinkBlade);
 
         //Leher
-        this.neck = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, 0.035, 0.2, 30, WHITE);
+        this.neck = new Cylinder(...GL_PARAMS, 0.035, 0.2, 30, WHITE);
         LIBS.translateY(this.neck.POSITION_MATRIX, 0.5);
         this.body.childs.push(this.neck);
 
         // Kepala
         // Kepala Putih
         const headRadiusWhite = 0.18;
-        this.head = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusWhite+0.01, headRadiusWhite, headRadiusWhite+0.03, 30, 30, 360, WHITE);
+        this.head = new Ellipsoid(...GL_PARAMS, headRadiusWhite+0.01, headRadiusWhite, headRadiusWhite+0.03, 30, 30, 360, WHITE);
         LIBS.translateY(this.head.POSITION_MATRIX, 0.73);
         this.body.childs.push(this.head);
 
@@ -147,7 +147,7 @@ export class Gardevoir {
         // Kepala Hijau
         const headGreen1Radius = 0.198;
         this.headGreen1 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _Mmatrix,
+            ...GL_PARAMS,
             headGreen1Radius, headGreen1Radius, headGreen1Radius,
             30, 30, 150, GREEN
         );
@@ -157,7 +157,7 @@ export class Gardevoir {
 
         const headGreen3Radius = 0.2;
         this.headGreen3 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _Mmatrix,
+            ...GL_PARAMS,
             headGreen3Radius, headGreen3Radius, headGreen3Radius,
             30, 30, 90, GREEN
         );
@@ -169,7 +169,7 @@ export class Gardevoir {
 
         const headGreen4Radius = 0.2;
         this.headGreen4 = new Ellipsoid(
-            GL, SHADER_PROGRAM, _position, _Mmatrix,
+            ...GL_PARAMS,
             headGreen4Radius, headGreen4Radius, headGreen4Radius,
             30, 30, 90, GREEN
         );
@@ -180,7 +180,7 @@ export class Gardevoir {
         this.head.childs.push(this.headGreen4);
 
         const headRadiusGreen = 0.18;
-        this.headGreen = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, headRadiusGreen+0.01, headRadiusGreen, headRadiusGreen+0.03, 30, 30, 360, GREEN);
+        this.headGreen = new Ellipsoid(...GL_PARAMS, headRadiusGreen+0.01, headRadiusGreen, headRadiusGreen+0.03, 30, 30, 360, GREEN);
         LIBS.translateZ(this.headGreen.POSITION_MATRIX, -0.005);
         this.head.childs.push(this.headGreen);
 
@@ -506,7 +506,7 @@ export class Gardevoir {
         //Tangan Kiri
         const ArmLeftTopRadius = 0.05;
         const ArmLeftTopHeight = 0.5;
-        this.ArmLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftTopRadius, ArmLeftTopHeight, 30, GREEN);
+        this.ArmLeftTop = new Cylinder(...GL_PARAMS, ArmLeftTopRadius, ArmLeftTopHeight, 30, GREEN);
         LIBS.rotateZ(this.ArmLeftTop.POSITION_MATRIX, -Math.PI / 2);
         LIBS.translateY(this.ArmLeftTop.POSITION_MATRIX, 0.32);
         LIBS.translateX(this.ArmLeftTop.POSITION_MATRIX, -0.2);
@@ -514,14 +514,14 @@ export class Gardevoir {
         this.body.childs.push(this.ArmLeftTop);
 
         const ArmLeftBottomRadius = 0.15;
-        this.ArmLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmLeftBottomRadius-0.075, ArmLeftBottomRadius+0.15, ArmLeftBottomRadius-0.075, 30, 30, 360, GREEN);
+        this.ArmLeftBottom = new Ellipsoid(...GL_PARAMS, ArmLeftBottomRadius-0.075, ArmLeftBottomRadius+0.15, ArmLeftBottomRadius-0.075, 30, 30, 360, GREEN);
         LIBS.translateY(this.ArmLeftBottom.POSITION_MATRIX, -0.4);
         this.ArmLeftTop.childs.push(this.ArmLeftBottom);
 
         //Tangan Kanan
         const ArmRightTopRadius = 0.05;
         const ArmRightTopHeight = 0.5;
-        this.ArmRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightTopRadius, ArmRightTopHeight, 30, GREEN);
+        this.ArmRightTop = new Cylinder(...GL_PARAMS, ArmRightTopRadius, ArmRightTopHeight, 30, GREEN);
         LIBS.rotateZ(this.ArmRightTop.POSITION_MATRIX, -Math.PI / 2);
         LIBS.translateY(this.ArmRightTop.POSITION_MATRIX, 0.32);
         LIBS.translateX(this.ArmRightTop.POSITION_MATRIX, 0.2);
@@ -529,33 +529,33 @@ export class Gardevoir {
         this.body.childs.push(this.ArmRightTop);
 
         const ArmRightBottomRadius = 0.15;
-        this.ArmRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, ArmRightBottomRadius-0.075, ArmRightBottomRadius+0.15, ArmRightBottomRadius-0.075, 30, 30, 360, GREEN);
+        this.ArmRightBottom = new Ellipsoid(...GL_PARAMS, ArmRightBottomRadius-0.075, ArmRightBottomRadius+0.15, ArmRightBottomRadius-0.075, 30, 30, 360, GREEN);
         LIBS.translateY(this.ArmRightBottom.POSITION_MATRIX, 0.4);
         this.ArmRightTop.childs.push(this.ArmRightBottom);
 
         // Kaki Kiri
         const legLeftTopRadius = 0.04;
         const legLeftTopHeight = 1.1;
-        this.legLeftTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, legLeftTopRadius, legLeftTopHeight, 30, GREEN);
+        this.legLeftTop = new Cylinder(...GL_PARAMS, legLeftTopRadius, legLeftTopHeight, 30, GREEN);
         LIBS.translateY(this.legLeftTop.POSITION_MATRIX, -0.3);
         LIBS.translateX(this.legLeftTop.POSITION_MATRIX, -0.06);
         this.body.childs.push(this.legLeftTop);
         
         const legLeftBottomRadius = 0.15;
-        this.legLeftBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legLeftBottomRadius-0.075, legLeftBottomRadius+0.1, legLeftBottomRadius-0.075, 30, 30, 360, GREEN);
+        this.legLeftBottom = new Ellipsoid(...GL_PARAMS, legLeftBottomRadius-0.075, legLeftBottomRadius+0.1, legLeftBottomRadius-0.075, 30, 30, 360, GREEN);
         LIBS.translateY(this.legLeftBottom.POSITION_MATRIX, -0.55);
         this.legLeftTop.childs.push(this.legLeftBottom);
     
         // Kaki Kanan
         const legRightTopRadius = 0.04;
         const legRightTopHeight = 1.1;
-        this.legRightTop = new Cylinder(GL, SHADER_PROGRAM, _position, _Mmatrix, legRightTopRadius, legRightTopHeight, 30, GREEN);
+        this.legRightTop = new Cylinder(...GL_PARAMS, legRightTopRadius, legRightTopHeight, 30, GREEN);
         LIBS.translateY(this.legRightTop.POSITION_MATRIX, -0.3);
         LIBS.translateX(this.legRightTop.POSITION_MATRIX, 0.06);
         this.body.childs.push(this.legRightTop);
         
         const legRightBottomRadius = 0.15;
-        this.legRightBottom = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, legRightBottomRadius-0.075, legRightBottomRadius+0.1, legRightBottomRadius-0.075, 30, 30, 360, GREEN);
+        this.legRightBottom = new Ellipsoid(...GL_PARAMS, legRightBottomRadius-0.075, legRightBottomRadius+0.1, legRightBottomRadius-0.075, 30, 30, 360, GREEN);
         LIBS.translateY(this.legRightBottom.POSITION_MATRIX, -0.55)
         this.legRightTop.childs.push(this.legRightBottom)
 
