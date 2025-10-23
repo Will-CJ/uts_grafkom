@@ -425,7 +425,7 @@ export class Kirlia {
         this.body.childs.push(headHornRight);
         
         // --- MEMBUAT ORB 1 (Cyan) ---
-        this.orb = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, 
+        this.orb = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, 
             this.orbRadius, this.orbRadius, this.orbRadius, 
             20, 20, 360, ORB_COLOR);
         LIBS.translateX(this.orb.POSITION_MATRIX, -0.3); // Posisi awal arb (di luar)
@@ -433,7 +433,7 @@ export class Kirlia {
         this.bodyGreen.childs.push(this.orb); 
 
         // --- MEMBUAT ORB 2 (Magenta, BARU) ---
-        this.orb2 = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, 
+        this.orb2 = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, 
             this.orbRadius, this.orbRadius, this.orbRadius, 
             20, 20, 360, ORB2_COLOR);
         LIBS.translateX(this.orb2.POSITION_MATRIX, 0.3); // Posisi awal di sisi X positif
