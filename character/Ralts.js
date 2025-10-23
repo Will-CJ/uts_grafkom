@@ -248,7 +248,7 @@ export class Ralts {
 
         // --- ORB OBJECTS ---
         const orbBaseRadius = 0.05;
-        this.orb = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, orbBaseRadius, orbBaseRadius, orbBaseRadius, 15, 15, 360, PURPLE);
+        this.orb = new Ellipsoid(GL, SHADER_PROGRAM, _position, _Mmatrix, _normal, orbBaseRadius, orbBaseRadius, orbBaseRadius, 15, 15, 360, PURPLE);
         this.orbObjects = [this.orb]; 
         
         // INISIALISASI: Sembunyikan Orb di awal
