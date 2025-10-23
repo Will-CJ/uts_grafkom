@@ -191,9 +191,7 @@ function main() {
     gardevoir.setup();
 
     const gallade = new Gallade(GL, LIGHTING_SHADER_PROGRAM, _position, _Mmatrix, _normal); // Tambah _normal
-    const galladeModelMatrix = LIBS.get_I4();
-    LIBS.translateX(galladeModelMatrix, 3.0);
-    LIBS.translateY(galladeModelMatrix, 0.2 + GRASS_OFFSET);
+    gallade.setBasePosition(3.0, 0.2 + GRASS_OFFSET, 0.0);
     gallade.setup();
 
 // ----------------------------------------------------------------------
@@ -365,7 +363,9 @@ function main() {
         gardevoir.updateGlobalMovement(elapsed, gardevoirModelMatrix);
 
         // Gallade
-        gallade.render(galladeModelMatrix);
+        const currentGalladeMatrix = gallade.getModelMatrix();
+        gallade.update(elapsed, globalTime);
+        gallade.render(currentGalladeMatrix);
 
         /*--- RUMPUT 3D DRAW (Menggunakan Matriks Pulau sebagai Parent) ---*/
         grass.render(islandModelMatrix);
