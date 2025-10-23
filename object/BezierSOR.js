@@ -23,28 +23,6 @@ function getBezierTangent(t, p) {
     return [tx, ty];
 }
 
-function getBezierTangent(t, p) {
-    let t2 = t * t;
-    let mt = 1.0 - t;
-    let mt2 = mt * mt;
-
-    // Derivative formula for cubic Bezier:
-    // P'(t) = 3(1-t)^2(P1-P0) + 6(1-t)t(P2-P1) + 3t^2(P3-P2)
-
-    let c0x = 3.0 * (p[1][0] - p[0][0]);
-    let c1x = 6.0 * (p[2][0] - p[1][0]);
-    let c2x = 3.0 * (p[3][0] - p[2][0]);
-
-    let c0y = 3.0 * (p[1][1] - p[0][1]);
-    let c1y = 6.0 * (p[2][1] - p[1][1]);
-    let c2y = 3.0 * (p[3][1] - p[2][1]);
-
-    let tx = mt2 * c0x + mt * t * c1x + t2 * c2x; // This is radius'(t)
-    let ty = mt2 * c0y + mt * t * c1y + t2 * c2y; // This is y'(t)
-
-    return [tx, ty];
-}
-
 function getBezierPoint(t, p) {
     let t2 = t * t;
     let t3 = t2 * t;
