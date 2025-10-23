@@ -46,7 +46,7 @@ function main() {
         void main(void) {
             gl_Position = Pmatrix * Vmatrix * Mmatrix * vec4(position, 1.);
             // KEY TRICK: Set Z to W to ensure the skybox is drawn at max depth, appearing infinite
-            gl_Position.z = gl_Position.w; 
+            gl_Position.z = gl_Position.w;
             vUV = uv;
         }`;
 
@@ -65,36 +65,36 @@ function main() {
         GL.compileShader(shader);
         if (!GL.getShaderParameter(shader, GL.COMPILE_STATUS)) {
             alert("ERROR IN " + typeString + " SHADER: " + GL.getShaderInfoLog(shader));
-            return null; 
+            return null;
         }
         return shader;
     }
-    
+   
     // --- Compile & Link Color Shader Program ---
     var color_shader_vertex = compile_shader(color_shader_vertex_source, GL.VERTEX_SHADER, "COLOR VERTEX");
     var color_shader_fragment = compile_shader(color_shader_fragment_source, GL.FRAGMENT_SHADER, "COLOR FRAGMENT");
-    
-    if (color_shader_vertex === null || color_shader_fragment === null) return; 
+   
+    if (color_shader_vertex === null || color_shader_fragment === null) return;
 
     var COLOR_SHADER_PROGRAM = GL.createProgram();
     GL.attachShader(COLOR_SHADER_PROGRAM, color_shader_vertex);
     GL.attachShader(COLOR_SHADER_PROGRAM, color_shader_fragment);
     GL.linkProgram(COLOR_SHADER_PROGRAM);
-    
+   
     // --- Compile & Link Skybox Shader Program ---
     var skybox_shader_vertex = compile_shader(skybox_shader_vertex_source, GL.VERTEX_SHADER, "SKYBOX VERTEX");
     var skybox_shader_fragment = compile_shader(skybox_shader_fragment_source, GL.FRAGMENT_SHADER, "SKYBOX FRAGMENT");
-    
+   
     if (skybox_shader_vertex === null || skybox_shader_fragment === null) return;
 
     var SKYBOX_SHADER_PROGRAM = GL.createProgram();
     GL.attachShader(SKYBOX_SHADER_PROGRAM, skybox_shader_vertex);
     GL.attachShader(SKYBOX_SHADER_PROGRAM, skybox_shader_fragment);
     GL.linkProgram(SKYBOX_SHADER_PROGRAM);
-    
+   
     // Set up default program and get locations
-    GL.useProgram(COLOR_SHADER_PROGRAM); 
-    
+    GL.useProgram(COLOR_SHADER_PROGRAM);
+   
     var _position = GL.getAttribLocation(COLOR_SHADER_PROGRAM, "position");
     GL.enableVertexAttribArray(_position);
     var _Pmatrix = GL.getUniformLocation(COLOR_SHADER_PROGRAM, "Pmatrix");
@@ -106,35 +106,35 @@ function main() {
     var _sky_position = GL.getAttribLocation(SKYBOX_SHADER_PROGRAM, "position");
     var _sky_uv = GL.getAttribLocation(SKYBOX_SHADER_PROGRAM, "uv");
     var _sky_sampler = GL.getUniformLocation(SKYBOX_SHADER_PROGRAM, "sampler");
-    
+   
     GL.useProgram(SKYBOX_SHADER_PROGRAM);
-    GL.uniform1i(_sky_sampler, 0); 
+    GL.uniform1i(_sky_sampler, 0);
     GL.enableVertexAttribArray(_sky_position);
     GL.enableVertexAttribArray(_sky_uv);
-    
-    GL.useProgram(COLOR_SHADER_PROGRAM); 
+   
+    GL.useProgram(COLOR_SHADER_PROGRAM);
 
     /*========================= OBJEK SETUP - CHARACTERS ========================= */
     const GRASS_OFFSET = 0.01;
 
     const ralts = new Ralts(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
     const raltsModelMatrix = LIBS.get_I4();
-    LIBS.translateX(raltsModelMatrix, -3.0); 
-    LIBS.translateY(raltsModelMatrix, 0.4); 
+    LIBS.translateX(raltsModelMatrix, -3.0);
+    LIBS.translateY(raltsModelMatrix, 0.4);
     LIBS.scale(raltsModelMatrix, 1.5, 1.5, 1.5);
     ralts.setup();
-    
+   
     const kirlia = new Kirlia(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
     const kirliaModelMatrix = LIBS.get_I4();
-    LIBS.translateX(kirliaModelMatrix, -1.0); 
-    LIBS.translateY(kirliaModelMatrix, 0.6); 
+    LIBS.translateX(kirliaModelMatrix, -1.0);
+    LIBS.translateY(kirliaModelMatrix, 0.6);
     LIBS.scale(kirliaModelMatrix, 1.2, 1.2, 1.2);
     kirlia.setup();
-    
-    const gardevoir = new Gardevoir(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix); 
+   
+    const gardevoir = new Gardevoir(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
     const gardevoirModelMatrix = LIBS.get_I4();
-    LIBS.translateX(gardevoirModelMatrix, 1.0); 
-    LIBS.translateY(gardevoirModelMatrix, -1.0); 
+    LIBS.translateX(gardevoirModelMatrix, 1.0);
+    LIBS.translateY(gardevoirModelMatrix, -1.0);
     gardevoir.setGlobalRotation(
         [1, 1, 0], 
         [0, 3, 4] 
@@ -143,8 +143,8 @@ function main() {
 
     const gallade = new Gallade(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
     const galladeModelMatrix = LIBS.get_I4();
-    LIBS.translateX(galladeModelMatrix, 3.0); 
-    LIBS.translateY(galladeModelMatrix, 0.2 + GRASS_OFFSET); 
+    LIBS.translateX(galladeModelMatrix, 3.0);
+    LIBS.translateY(galladeModelMatrix, 0.2 + GRASS_OFFSET);
     gallade.setup();
 
 // ----------------------------------------------------------------------
@@ -170,7 +170,7 @@ function main() {
     /*========================= MATRICES & CONTROLS ========================= */
     var PROJMATRIX = LIBS.get_projection(40, CANVAS.width / CANVAS.height, 1, 100);
     var VIEWMATRIX = LIBS.get_I4();
-    LIBS.translateZ(VIEWMATRIX, -8); 
+    LIBS.translateZ(VIEWMATRIX, -8);
 
     // MOUSE LOOK CONTROLS
     var drag = false;
@@ -199,14 +199,14 @@ function main() {
 
     // KEYBOARD CONTROLS STATE (WASD, Spasi/Ctrl)
     let keys = {};
-    let isWalking = false; 
+    let isWalking = false;
 
     // Kirlia animation sequence start (every 15 seconds)
     setInterval(() => { kirlia.runAnimation(); }, 15000);
 
     let globalTime = 0.0;
     let lastTime = 0;
-    const cameraSpeed = 5.0; 
+    const cameraSpeed = 5.0;
 
     document.addEventListener('keydown', (event) => {
         const key = event.key.toLowerCase();
@@ -221,7 +221,7 @@ function main() {
 
         if (key === 'p') { isWalking = false; }
     });
-    
+   
     /*========================= DRAWING ========================= */
     GL.enable(GL.DEPTH_TEST);
     GL.depthFunc(GL.LEQUAL);
@@ -229,10 +229,10 @@ function main() {
     GL.clearDepth(1.0);
 
     function animate(time) {
-        const elapsed = (time - lastTime) / 1000; 
+        const elapsed = (time - lastTime) / 1000;
         lastTime = time;
-        
-        globalTime += elapsed; 
+       
+        globalTime += elapsed;
 
         GL.viewport(0, 0, CANVAS.width, CANVAS.height);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
@@ -253,14 +253,14 @@ function main() {
         let camTranslation = LIBS.get_I4();
 
         const dist = cameraSpeed * elapsed;
-        
-        if (keys['w']) { LIBS.translateZ(camTranslation, dist); } 
-        if (keys['s']) { LIBS.translateZ(camTranslation, -dist); } 
-        if (keys['a']) { LIBS.translateX(camTranslation, dist); } 
-        if (keys['d']) { LIBS.translateX(camTranslation, -dist); } 
-        if (keys[' ']) { LIBS.translateY(camTranslation, -dist); } 
-        if (keys['control']) { LIBS.translateY(camTranslation, dist); } 
-        
+       
+        if (keys['w']) { LIBS.translateZ(camTranslation, dist); }
+        if (keys['s']) { LIBS.translateZ(camTranslation, -dist); }
+        if (keys['a']) { LIBS.translateX(camTranslation, dist); }
+        if (keys['d']) { LIBS.translateX(camTranslation, -dist); }
+        if (keys[' ']) { LIBS.translateY(camTranslation, -dist); }
+        if (keys['control']) { LIBS.translateY(camTranslation, dist); }
+       
         VIEWMATRIX = LIBS.multiply(camTranslation, VIEWMATRIX);
 
         var finalViewMatrix = LIBS.multiply(mouseRotationMatrix, VIEWMATRIX);
@@ -275,21 +275,21 @@ function main() {
         skybox.render(PROJMATRIX, V_TEMP);
 
         /*========================= 2. SCENE OBJECTS DRAW ========================= */
-        
-        GL.useProgram(COLOR_SHADER_PROGRAM); 
+       
+        GL.useProgram(COLOR_SHADER_PROGRAM);
         GL.uniformMatrix4fv(_Pmatrix, false, PROJMATRIX);
-        GL.uniformMatrix4fv(_Vmatrix, false, finalViewMatrix); 
-        
+        GL.uniformMatrix4fv(_Vmatrix, false, finalViewMatrix);
+       
         /*--- FLOATING ISLAND DRAW ---*/
         floatingIsland.render();
 
         /*--- CHARACTER DRAW ---*/
-        
+       
         ralts.render(raltsModelMatrix);
         kirlia.render(kirliaModelMatrix, time);
 
-        // Gardevoir 
-        gardevoir.render(gardevoirModelMatrix, time); 
+        // Gardevoir
+        gardevoir.render(gardevoirModelMatrix, time);
         gardevoir.updateGlobalMovement(elapsed, gardevoirModelMatrix);
 
         // Gallade
