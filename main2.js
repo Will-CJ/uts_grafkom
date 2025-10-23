@@ -119,7 +119,7 @@ function main() {
     const ralts = new Ralts(GL, COLOR_SHADER_PROGRAM, _position, _Mmatrix);
     const raltsModelMatrix = LIBS.get_I4();
     LIBS.translateX(raltsModelMatrix, -3.0);
-    LIBS.translateY(raltsModelMatrix, 0.4);
+    LIBS.translateY(raltsModelMatrix, 0.43);
     LIBS.scale(raltsModelMatrix, 1.5, 1.5, 1.5);
     ralts.setup();
    
@@ -432,6 +432,7 @@ function main() {
     let isWalking = false;
 
     setInterval(() => { kirlia.runAnimation(); }, 15000);
+    setInterval(() => { ralts.runAnimation(); }, 5000);
 
     let globalTime = 0.0;
     let lastTime = 0;
@@ -548,7 +549,7 @@ function main() {
 
         /*--- CHARACTER DRAW ---*/
        
-        ralts.render(raltsModelMatrix);
+        ralts.render(raltsModelMatrix, time);
         kirlia.render(kirliaModelMatrix, time);
 
         // Gardevoir
